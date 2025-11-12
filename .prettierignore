@@ -1,0 +1,5 @@
+*.yml
+*.yaml
+*.json
+*.jsonc
+node_modules/
