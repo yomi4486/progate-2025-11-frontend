@@ -1,13 +1,65 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
+import { Tabs, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { supabase } from '@/lib/supabase';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const router = useRouter();
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const checkSession = async () => {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (!session) {
+          // Not signed in -> go to login
+          router.replace({ pathname: ('/login' as any) });
+          return;
+        }
+
+        if (mounted) setChecking(false);
+      } catch (e) {
+  router.replace('/login' as any);
+      }
+    };
+
+    checkSession();
+
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+  router.replace('/login' as any);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      // unsubscribe if available
+      try {
+        data?.subscription?.unsubscribe?.();
+      } catch (_) {
+        // ignore
+      }
+    };
+  }, [router]);
+
+  if (checking) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
 
   return (
     <Tabs
@@ -33,3 +85,7 @@ export default function TabLayout() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+});

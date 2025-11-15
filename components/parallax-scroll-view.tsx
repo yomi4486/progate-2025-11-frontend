@@ -14,14 +14,16 @@ import { useThemeColor } from '@/hooks/use-theme-color';
 const HEADER_HEIGHT = 250;
 
 type Props = PropsWithChildren<{
-  headerImage: ReactElement;
+  headerImage?: ReactElement | null;
   headerBackgroundColor: { dark: string; light: string };
+  scrollEnabled?: boolean;
 }>;
 
 export default function ParallaxScrollView({
   children,
   headerImage,
   headerBackgroundColor,
+  scrollEnabled = true,
 }: Props) {
   const backgroundColor = useThemeColor({}, 'background');
   const colorScheme = useColorScheme() ?? 'light';
@@ -48,14 +50,15 @@ export default function ParallaxScrollView({
     <Animated.ScrollView
       ref={scrollRef}
       style={{ backgroundColor, flex: 1 }}
+  scrollEnabled={scrollEnabled}
       scrollEventThrottle={16}>
       <Animated.View
         style={[
           styles.header,
-          { backgroundColor: headerBackgroundColor[colorScheme] },
+          { backgroundColor: headerBackgroundColor[colorScheme], height: headerImage ? HEADER_HEIGHT : 0 },
           headerAnimatedStyle,
         ]}>
-        {headerImage}
+        {headerImage ?? null}
       </Animated.View>
       <ThemedView style={styles.content}>{children}</ThemedView>
     </Animated.ScrollView>
