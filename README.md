@@ -25,8 +25,8 @@ source ~/.zshrc
 ```
 > 安定版の Node をインストールして使う
 ```sh
-nvm install --lts
-nvm use --lts
+nvm install latest
+nvm use latest
 ```
 
 2. リポジトリの依存関係をインストールする (pnpm を使う)
