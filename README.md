@@ -1,7 +1,9 @@
 # Progate 58ハッカソン　11月！
 
 ### セットアップ
+
 > リポジトリをクローンして自分のパソコンで使えるようにする
+
 ```sh
 git clone https://github.com/yomi4486/progate-2025-11-frontend.git
 ```
@@ -14,16 +16,20 @@ git clone https://github.com/yomi4486/progate-2025-11-frontend.git
 
 - nvm（Node Version Manager）を使うと Node.js の管理が楽です。インストール方法の一例:
 
-
 > nvm のインストール（まだ入れていない場合）
+
 ```sh
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.6/install.sh
 ```
+
 > シェルをリロードして nvm を使えるようにする
+
 ```sh
 source ~/.zshrc
 ```
+
 > 安定版の Node をインストールして使う
+
 ```sh
 nvm install latest
 nvm use latest
