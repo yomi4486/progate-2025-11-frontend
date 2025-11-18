@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import ParallaxScrollView from "@/components/parallax-scroll-view";
@@ -141,8 +141,51 @@ export default function HomeScreen() {
   };
 
   const [modalVisible, setModalVisible] = useState(false);
+  const [checkingProfile, setCheckingProfile] = useState(false);
 
-  const openCreate = () => setModalVisible(true);
+  const openCreate = async () => {
+    setCheckingProfile(true);
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        // not authenticated -> go to login
+        router.push("/login");
+        return;
+      }
+
+      // check if profile exists in `users` table
+      const { data, error } = await supabase
+        .from("users")
+        .select("id")
+        .eq("id", user.id)
+        .limit(1);
+      if (error) throw error;
+      const exists = Array.isArray(data) ? data.length > 0 : !!data;
+      if (!exists) {
+        Alert.alert(
+          "プロフィールが必要",
+          "投稿にはプロフィールが必要です。プロフィールを設定しますか？",
+          [
+            { text: "いいえ", style: "cancel" },
+            {
+              text: "設定する",
+              onPress: () => router.push("/settings"),
+            },
+          ],
+        );
+        return;
+      }
+
+      setModalVisible(true);
+    } catch (e: any) {
+      console.error(e);
+      Alert.alert("エラー", e.message || String(e));
+    } finally {
+      setCheckingProfile(false);
+    }
+  };
   const closeCreate = () => setModalVisible(false);
 
   const handleSubmit = (title: string, description: string) => {
@@ -152,6 +195,23 @@ export default function HomeScreen() {
 
   return (
     <ThemedView style={{ flex: 1 }}>
+      {checkingProfile && (
+        <View
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            top: 0,
+            bottom: 0,
+            zIndex: 2000,
+            backgroundColor: "rgba(0,0,0,0.45)",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <ActivityIndicator size="large" color="#fff" />
+        </View>
+      )}
       {newPostBanner ? (
         <ThemedView
           style={{

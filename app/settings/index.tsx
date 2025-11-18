@@ -6,11 +6,13 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Database } from "@/lib/database.types";
 import { supabase } from "@/lib/supabase";
+import { PostgrestError } from "@supabase/supabase-js";
 
 type Profile = Database["public"]["Tables"]["users"]["Row"];
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const [title, setTitle] = useState<string>("設定");
   const [profile, setProfile] = useState<Profile>({
     name: "",
     bio: "",
@@ -49,8 +51,13 @@ export default function SettingsScreen() {
             icon_url: data.icon_url ?? "",
           });
         }
-      } catch (e) {
-        console.error(e);
+      } catch (e: PostgrestError | any) {
+        if(e["code"] == "PGRST116" && mounted){ // undefined table 'users'
+          setTitle("プロフィールを新規作成しましょう")
+        }else{
+          console.error(e);
+        }
+        
       }
     })();
     return () => {
@@ -92,7 +99,7 @@ export default function SettingsScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title">設定</ThemedText>
+      <ThemedText type="title">{title}</ThemedText>
       <TextInput
         placeholder="ユーザー名"
         value={profile.name}
