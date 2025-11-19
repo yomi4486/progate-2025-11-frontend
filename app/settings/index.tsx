@@ -51,12 +51,12 @@ export default function SettingsScreen() {
           });
         }
       } catch (e: PostgrestError | any) {
-        if(e["code"] == "PGRST116" && mounted){ // undefined table 'users'
+        if (e["code"] == "PGRST116" && mounted) {
+          // undefined table 'users'
           console.log("users table does not exist yet");
-        }else{
+        } else {
           console.error(e);
         }
-        
       }
     })();
     return () => {
@@ -99,7 +99,9 @@ export default function SettingsScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title">{profile.id ? "設定" : "プロフィールを設定しましょう"}</ThemedText>
+      <ThemedText type="title">
+        {profile.id ? "設定" : "プロフィールを設定しましょう"}
+      </ThemedText>
       <TextInput
         placeholder="ユーザー名"
         value={profile.name}
