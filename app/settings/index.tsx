@@ -1,15 +1,15 @@
+import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   Alert,
   Button,
+  Image,
+  Platform,
   StyleSheet,
   TextInput,
   View,
-  Image,
-  Platform,
 } from "react-native";
-import * as ImagePicker from "expo-image-picker";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -126,16 +126,23 @@ export default function SettingsScreen() {
 
       // fetch file and convert to blob
       const response = await fetch(uri);
-      const blob = await response.blob();
+      const arrayBuffer = await response.arrayBuffer();
+      const uint8 = new Uint8Array(arrayBuffer);
+
+      console.log("picked-uri=", uri);
+      console.log("arrayBuffer.byteLength=", arrayBuffer.byteLength);
+      console.log("uint8.length=", uint8.length);
 
       // use uid as filename (without extension) to satisfy RLS check
       const extMatch = uri.split(".").pop()?.split("?")[0] ?? "png";
       const filename = `${user.id}.${extMatch}`;
-      const path = `user_icons/${filename}`;
+      // when uploading to a bucket, the `path` should be relative to the bucket
+      // do NOT include the bucket name again here. Use just the filename (or subpath).
+      const path = `${filename}`;
 
       const { error: uploadError } = await supabase.storage
         .from("user_icons")
-        .upload(path, blob, { upsert: true });
+        .upload(path, uint8, { upsert: true });
       if (uploadError) throw uploadError;
 
       // get public url
@@ -144,10 +151,17 @@ export default function SettingsScreen() {
         .getPublicUrl(path);
       const publicUrl = urlData.publicUrl;
 
-      // update local state and persist to users table
+      // update local state and persist public URL to users.icon_url immediately
       setProfile((p) => ({ ...(p ?? {}), icon_url: publicUrl }));
-      // persist
-      await handleSave();
+      // Use upsert so we don't accidentally update all rows; upsert will insert
+      // or update the row with this user's id.
+      const { error: upsertError } = await supabase
+        .from("users")
+        .update({ icon_url: publicUrl })
+        .eq("id", user.id);
+      console.log("upsertError", upsertError);
+      if (upsertError) throw upsertError;
+      Alert.alert("保存しました", "アイコンを更新しました。");
     } catch (e: any) {
       console.error(e);
       Alert.alert("エラー", e.message || String(e));
