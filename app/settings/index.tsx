@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Alert, Button, StyleSheet, TextInput, View } from "react-native";
+import { Alert, Button, StyleSheet, TextInput, View, Image, Platform } from "react-native";
+import * as ImagePicker from "expo-image-picker";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -88,6 +89,62 @@ export default function SettingsScreen() {
     }
   };
 
+  const handlePickImage = async () => {
+    try {
+      // ask permission
+      if (Platform.OS !== "web") {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== "granted") {
+          Alert.alert("権限が必要です", "写真へのアクセス権が必要です");
+          return;
+        }
+      }
+
+      const res = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 0.8,
+      });
+      if ((res as any).cancelled || (res as any).canceled) return;
+      const uri = (res as any).assets?.[0]?.uri ?? (res as any).uri;
+      if (!uri) return;
+
+      setLoading(true);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      // fetch file and convert to blob
+      const response = await fetch(uri);
+      const blob = await response.blob();
+
+      // use uid as filename (without extension) to satisfy RLS check
+      const extMatch = uri.split(".").pop()?.split("?")[0] ?? "png";
+      const filename = `${user.id}.${extMatch}`;
+      const path = `user_icons/${filename}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("user_icons")
+        .upload(path, blob, { upsert: true });
+      if (uploadError) throw uploadError;
+
+      // get public url
+      const { data: urlData } = supabase.storage.from("user_icons").getPublicUrl(path);
+      const publicUrl = urlData.publicUrl;
+
+      // update local state and persist to users table
+      setProfile((p) => ({ ...(p ?? {}), icon_url: publicUrl }));
+      // persist
+      await handleSave();
+    } catch (e: any) {
+      console.error(e);
+      Alert.alert("エラー", e.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
@@ -102,6 +159,17 @@ export default function SettingsScreen() {
       <ThemedText type="title">
         {profile.id ? "設定" : "プロフィールを設定しましょう"}
       </ThemedText>
+      {profile?.icon_url ? (
+        <Image
+          source={{ uri: String(profile.icon_url) }}
+          style={{ width: 96, height: 96, borderRadius: 48, marginTop: 12 }}
+        />
+      ) : (
+        <View style={{ width: 96, height: 96, borderRadius: 48, backgroundColor: '#ddd', marginTop: 12 }} />
+      )}
+      <View style={{ height: 8 }} />
+      <Button title="アイコンを選択" onPress={handlePickImage} />
+
       <TextInput
         placeholder="ユーザー名"
         value={profile.name}
