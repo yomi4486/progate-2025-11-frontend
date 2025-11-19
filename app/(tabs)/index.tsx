@@ -244,9 +244,11 @@ export default function HomeScreen() {
       }
 
       setModalVisible(true);
-    } catch (e: any) {
-      console.error(e);
-      Alert.alert("エラー", e.message || String(e));
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        console.error(e);
+        Alert.alert("エラー", e.message || String(e));
+      }
     } finally {
       setCheckingProfile(false);
     }

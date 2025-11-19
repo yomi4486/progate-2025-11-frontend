@@ -5,6 +5,7 @@ import { Alert, Button, StyleSheet, Text, TextInput, View } from "react-native";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { supabase } from "@/lib/supabase";
+import { AuthError } from "@supabase/supabase-js";
 
 export default function ConfirmScreen() {
   const { email } = useLocalSearchParams<{ email?: string }>();
@@ -24,8 +25,8 @@ export default function ConfirmScreen() {
         "メール送信済み",
         `${email} 宛に確認メール（マジックリンク）を送信しました。メールの確認を行ってください。`,
       );
-    } catch (err: any) {
-      Alert.alert("エラー", err.message || String(err));
+    } catch (err: AuthError | unknown) {
+      if (err instanceof Error) Alert.alert("エラー", err.message || String(err));
     } finally {
       setLoading(false);
     }
@@ -50,8 +51,8 @@ export default function ConfirmScreen() {
       if (error) throw error;
       Alert.alert("確認済み", "メールアドレスの確認が完了しました。");
       router.replace("/login");
-    } catch (err: any) {
-      Alert.alert("エラー", err.message || String(err));
+    } catch (err: AuthError | unknown) {
+      if (err instanceof Error) Alert.alert("エラー", err.message || String(err));
     } finally {
       setLoading(false);
     }

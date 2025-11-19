@@ -59,8 +59,8 @@ export default function SettingsScreen() {
             icon_url: data.icon_url ?? "",
           });
         }
-      } catch (e: PostgrestError | any) {
-        if (e["code"] == "PGRST116" && mounted) {
+      } catch (e: PostgrestError | unknown) {
+        if (e instanceof PostgrestError && e["code"] == "PGRST116" && mounted) {
           // undefined table 'users'
           console.log("users table does not exist yet");
         } else {
@@ -86,12 +86,12 @@ export default function SettingsScreen() {
         name: profile.name ?? "",
         bio: profile.bio ?? null,
         icon_url: profile.icon_url ?? null,
-      } as any;
+      };
       const { error } = await supabase.from("users").upsert(updates);
       if (error) throw error;
       Alert.alert("保存しました");
-    } catch (e: any) {
-      Alert.alert("エラー", e.message || String(e));
+    } catch (e: unknown) {
+      if (e instanceof Error) Alert.alert("エラー", e.message || String(e));
     } finally {
       setLoading(false);
     }
@@ -114,8 +114,8 @@ export default function SettingsScreen() {
         allowsEditing: true,
         quality: 0.8,
       });
-      if ((res as any).cancelled || (res as any).canceled) return;
-      const uri = (res as any).assets?.[0]?.uri ?? (res as any).uri;
+      if (res.canceled || res.canceled) return;
+      const uri = res.assets?.[0]?.uri ?? res.assets[0].uri;
       if (!uri) return;
 
       setLoading(true);
@@ -162,9 +162,11 @@ export default function SettingsScreen() {
       console.log("upsertError", upsertError);
       if (upsertError) throw upsertError;
       Alert.alert("保存しました", "アイコンを更新しました。");
-    } catch (e: any) {
-      console.error(e);
-      Alert.alert("エラー", e.message || String(e));
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        console.error(e);
+        Alert.alert("エラー", e.message || String(e));
+      }
     } finally {
       setLoading(false);
     }
@@ -174,8 +176,10 @@ export default function SettingsScreen() {
     try {
       await supabase.auth.signOut();
       router.replace("/login");
-    } catch (e: any) {
-      Alert.alert("エラー", e.message || String(e));
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        Alert.alert("エラー", e.message || String(e));
+      }
     }
   };
 

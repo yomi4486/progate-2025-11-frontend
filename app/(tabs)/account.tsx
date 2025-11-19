@@ -55,9 +55,11 @@ export default function AccountScreen() {
         if (timelineError) throw timelineError;
         if (!mounted) return;
         setPosts((timelineData as unknown as TimelineItem[]) || []);
-      } catch (e: any) {
-        console.error("Account load failed", e);
-        Alert.alert("エラー", e.message || String(e));
+      } catch (e: unknown) {
+        if (e instanceof Error) {
+          console.error("Account load failed", e);
+          Alert.alert("エラー", e.message || String(e));
+        }
       } finally {
         if (mounted) setLoading(false);
       }

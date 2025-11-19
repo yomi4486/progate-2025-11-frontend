@@ -46,19 +46,20 @@ export default function LoginScreen() {
 
       // On success, navigate to app
       router.replace("/(tabs)");
-    } catch (error: any) {
-      // If email not confirmed, navigate to confirmation screen
-      const message: string = (error && error.message) || String(error);
-      if (
-        message.toLowerCase().includes("email not confirmed") ||
-        message.toLowerCase().includes("confirm") ||
-        error?.status === 403
-      ) {
-        router.push({ pathname: "/confirm", params: { email } });
-        return;
-      }
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        // If email not confirmed, navigate to confirmation screen
+        const message: string = (error && error.message) || String(error);
+        if (
+          message.toLowerCase().includes("email not confirmed") ||
+          message.toLowerCase().includes("confirm")
+        ) {
+          router.push({ pathname: "/confirm", params: { email } });
+          return;
+        }
 
-      Alert.alert("サインインに失敗しました", message);
+        Alert.alert("サインインに失敗しました", message);
+      }
     } finally {
       setLoading(false);
     }
