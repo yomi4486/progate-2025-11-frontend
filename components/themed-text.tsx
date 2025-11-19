@@ -44,6 +44,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   title: {
+    fontFamily: "Roboto Condensed",
     fontSize: 32,
     fontWeight: "bold",
     lineHeight: 32,
