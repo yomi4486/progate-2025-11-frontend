@@ -15,6 +15,10 @@ import TinderCard from "react-tinder-card";
 import { cardStyles, styles, swipeStyles } from "./index.css";
 
 type TimelineItem = Database["public"]["Tables"]["timelines"]["Row"];
+type SwipeHandlers = {
+  onSwipe?: (id: string, direction: string) => void;
+  onCardLeftScreen?: (id: string) => void;
+};
 
 function TimelineCard({ item }: { item: TimelineItem }) {
   const [author, setAuthor] = useState<{
@@ -90,11 +94,6 @@ function TimelineCard({ item }: { item: TimelineItem }) {
     </View>
   );
 }
-
-type SwipeHandlers = {
-  onSwipe?: (id: string, direction: string) => void;
-  onCardLeftScreen?: (id: string) => void;
-};
 
 function TimelineSwiper({
   items,

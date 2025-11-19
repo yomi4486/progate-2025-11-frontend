@@ -4,9 +4,9 @@ import {
   ActivityIndicator,
   Alert,
   Button,
-  StyleSheet,
-  View,
+  View
 } from "react-native";
+import { styles } from "./account.css";
 
 import ParallaxScrollView from "@/components/parallax-scroll-view";
 import { ThemedText } from "@/components/themed-text";
@@ -156,16 +156,3 @@ export default function AccountScreen() {
     </ParallaxScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  headerImage: {
-    color: "#808080",
-    bottom: -90,
-    left: -35,
-    position: "absolute",
-  },
-  titleContainer: {
-    flexDirection: "row",
-    gap: 8,
-  },
-});
