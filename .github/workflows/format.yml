@@ -1,0 +1,90 @@
+name: Format changed files with Prettier
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  prettier:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create GitHub App auth token
+        uses: tibdex/github-app-token@v1
+        id: app_token
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.PRIVATE_KEY }}
+
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+        with:
+          # checkout the pull request head from the fork (if any)
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
+          token: ${{ steps.app_token.outputs.token }}
+          fetch-depth: 0
+
+      - name: Detect self-commit
+        id: check_commit
+        run: |
+          # get the last commit author email
+          AUTHOR_EMAIL=$(git log -1 --pretty=format:'%ae' || true)
+          echo "author_email=$AUTHOR_EMAIL" >> $GITHUB_OUTPUT
+          if [ "$AUTHOR_EMAIL" = "github-actions[bot]@users.noreply.github.com" ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Cache pnpm store and node_modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.pnpm-store
+            node_modules
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - name: Install dependencies (pnpm)
+        if: steps.check_commit.outputs.skip != 'true'
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
+          pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Run Prettier on changed files
+        if: steps.check_commit.outputs.skip != 'true'
+        id: prettier
+        run: |
+          # run Prettier only on changed files
+          echo "$CHANGED" | xargs npx --yes prettier --write . || true
+
+      - name: Commit and push changes
+        if: steps.check_commit.outputs.skip != 'true'
+        run: |
+          # configure git user
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # stage changes
+          git add -A
+
+          # only commit if there are changes
+          if git diff --cached --quiet; then
+            echo "No formatting changes to commit"
+            exit 0
+          fi
+
+          git commit -m "chore: apply Prettier formatting"
+
+          # push using app token
+          git push "https://${{ steps.app_token.outputs.token }}@github.com/${{ github.event.pull_request.head.repo.full_name }}" HEAD:${{ github.event.pull_request.head.ref }}
