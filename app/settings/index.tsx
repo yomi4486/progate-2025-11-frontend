@@ -129,9 +129,9 @@ export default function SettingsScreen() {
       const arrayBuffer = await response.arrayBuffer();
       const uint8 = new Uint8Array(arrayBuffer);
 
-      console.log('picked-uri=', uri);
-      console.log('arrayBuffer.byteLength=', arrayBuffer.byteLength);
-      console.log('uint8.length=', uint8.length);
+      console.log("picked-uri=", uri);
+      console.log("arrayBuffer.byteLength=", arrayBuffer.byteLength);
+      console.log("uint8.length=", uint8.length);
 
       // use uid as filename (without extension) to satisfy RLS check
       const extMatch = uri.split(".").pop()?.split("?")[0] ?? "png";
