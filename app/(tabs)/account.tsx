@@ -1,6 +1,12 @@
 import { Image } from "expo-image";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, Button, StyleSheet, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Button,
+  StyleSheet,
+  View,
+} from "react-native";
 
 import ParallaxScrollView from "@/components/parallax-scroll-view";
 import { ThemedText } from "@/components/themed-text";
@@ -16,7 +22,12 @@ type TimelineItem = Database["public"]["Tables"]["timelines"]["Row"];
 export default function AccountScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState<{ name?: string | null; bio?: string | null; icon_url?: string | null; id?: string | null } | null>(null);
+  const [profile, setProfile] = useState<{
+    name?: string | null;
+    bio?: string | null;
+    icon_url?: string | null;
+    id?: string | null;
+  } | null>(null);
   const [posts, setPosts] = useState<TimelineItem[]>([]);
 
   useEffect(() => {
@@ -27,35 +38,38 @@ export default function AccountScreen() {
         const { data: userData } = await supabase.auth.getUser();
         const user = userData.user;
         if (!user) {
-          router.replace('/login');
+          router.replace("/login");
           return;
         }
 
         const { data: profileData, error: profileError } = await supabase
-          .from('users')
-          .select('id,name,bio,icon_url')
-          .eq('id', user.id)
+          .from("users")
+          .select("id,name,bio,icon_url")
+          .eq("id", user.id)
           .single();
-        if (profileError && profileError.code !== 'PGRST116') throw profileError;
+        if (profileError && profileError.code !== "PGRST116")
+          throw profileError;
         if (!mounted) return;
         setProfile(profileData ?? { id: user.id });
 
         const { data: timelineData, error: timelineError } = await supabase
-          .from('timelines')
-          .select('*')
-          .eq('author', user.id)
-          .order('created_at', { ascending: false });
+          .from("timelines")
+          .select("*")
+          .eq("author", user.id)
+          .order("created_at", { ascending: false });
         if (timelineError) throw timelineError;
         if (!mounted) return;
         setPosts((timelineData as unknown as TimelineItem[]) || []);
       } catch (e: any) {
-        console.error('Account load failed', e);
-        Alert.alert('エラー', e.message || String(e));
+        console.error("Account load failed", e);
+        Alert.alert("エラー", e.message || String(e));
       } finally {
         if (mounted) setLoading(false);
       }
     })();
-    return () => { mounted = false };
+    return () => {
+      mounted = false;
+    };
   }, [router]);
 
   return (
@@ -74,7 +88,7 @@ export default function AccountScreen() {
         <ThemedText type="title" style={{ fontFamily: Fonts.rounded }}>
           アカウント
         </ThemedText>
-        <Button title="設定" onPress={() => router.push('/settings')} />
+        <Button title="設定" onPress={() => router.push("/settings")} />
       </ThemedView>
 
       {loading ? (
@@ -83,14 +97,38 @@ export default function AccountScreen() {
         </View>
       ) : (
         <ThemedView style={{ padding: 16 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              marginBottom: 12,
+            }}
+          >
             {profile?.icon_url ? (
-              <Image source={{ uri: profile.icon_url }} style={{ width: 72, height: 72, borderRadius: 36, marginRight: 12 }} />
+              <Image
+                source={{ uri: profile.icon_url }}
+                style={{
+                  width: 72,
+                  height: 72,
+                  borderRadius: 36,
+                  marginRight: 12,
+                }}
+              />
             ) : (
-              <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: '#ddd', marginRight: 12 }} />
+              <View
+                style={{
+                  width: 72,
+                  height: 72,
+                  borderRadius: 36,
+                  backgroundColor: "#ddd",
+                  marginRight: 12,
+                }}
+              />
             )}
             <View>
-              <ThemedText type="title">{profile?.name ?? 'あなたのアカウント'}</ThemedText>
+              <ThemedText type="title">
+                {profile?.name ?? "あなたのアカウント"}
+              </ThemedText>
               {profile?.bio ? <ThemedText>{profile.bio}</ThemedText> : null}
             </View>
           </View>
@@ -100,7 +138,14 @@ export default function AccountScreen() {
             <ThemedText>まだ投稿がありません。</ThemedText>
           ) : (
             posts.map((p) => (
-              <View key={p.id} style={{ paddingVertical: 8, borderBottomWidth: 1, borderColor: '#eee' }}>
+              <View
+                key={p.id}
+                style={{
+                  paddingVertical: 8,
+                  borderBottomWidth: 1,
+                  borderColor: "#eee",
+                }}
+              >
                 <ThemedText type="subtitle">{p.title}</ThemedText>
                 <ThemedText>{p.description}</ThemedText>
               </View>

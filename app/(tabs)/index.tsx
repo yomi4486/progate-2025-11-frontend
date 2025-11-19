@@ -17,7 +17,10 @@ import { cardStyles, styles, swipeStyles } from "./index.css";
 type TimelineItem = Database["public"]["Tables"]["timelines"]["Row"];
 
 function TimelineCard({ item }: { item: TimelineItem }) {
-  const [author, setAuthor] = useState<{ name?: string | null; icon_url?: string | null } | null>(null);
+  const [author, setAuthor] = useState<{
+    name?: string | null;
+    icon_url?: string | null;
+  } | null>(null);
   const [loadingAuthor, setLoadingAuthor] = useState(false);
 
   useEffect(() => {
@@ -47,7 +50,9 @@ function TimelineCard({ item }: { item: TimelineItem }) {
 
   return (
     <View style={cardStyles.card} key={item.id}>
-      <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
+      <View
+        style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}
+      >
         {loadingAuthor ? (
           <ActivityIndicator size="small" />
         ) : (
@@ -55,12 +60,27 @@ function TimelineCard({ item }: { item: TimelineItem }) {
             {author?.icon_url ? (
               <Image
                 source={{ uri: author.icon_url as string }}
-                style={{ width: 36, height: 36, borderRadius: 18, marginRight: 8 }}
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  marginRight: 8,
+                }}
               />
             ) : (
-              <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: "#ddd", marginRight: 8 }} />
+              <View
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  backgroundColor: "#ddd",
+                  marginRight: 8,
+                }}
+              />
             )}
-            <ThemedText style={{ fontSize: 14 }}>{author?.name ?? "投稿者"}</ThemedText>
+            <ThemedText style={{ fontSize: 14 }}>
+              {author?.name ?? "投稿者"}
+            </ThemedText>
           </>
         )}
       </View>
@@ -237,11 +257,11 @@ export default function HomeScreen() {
   const handleSubmit = async (title: string, description: string) => {
     console.log("posting", { title, description });
     const userId = (await supabase.auth.getUser()).data.user?.id || "";
-    console.log(userId)
+    console.log(userId);
     const res = await supabase.from("timelines").insert({
       title,
       description,
-      author: userId
+      author: userId,
     });
     console.log("insert result", res);
   };
