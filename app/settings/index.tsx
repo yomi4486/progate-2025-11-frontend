@@ -1,6 +1,14 @@
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Alert, Button, StyleSheet, TextInput, View, Image, Platform } from "react-native";
+import {
+  Alert,
+  Button,
+  StyleSheet,
+  TextInput,
+  View,
+  Image,
+  Platform,
+} from "react-native";
 import * as ImagePicker from "expo-image-picker";
 
 import { ThemedText } from "@/components/themed-text";
@@ -93,7 +101,8 @@ export default function SettingsScreen() {
     try {
       // ask permission
       if (Platform.OS !== "web") {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        const { status } =
+          await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== "granted") {
           Alert.alert("権限が必要です", "写真へのアクセス権が必要です");
           return;
@@ -130,7 +139,9 @@ export default function SettingsScreen() {
       if (uploadError) throw uploadError;
 
       // get public url
-      const { data: urlData } = supabase.storage.from("user_icons").getPublicUrl(path);
+      const { data: urlData } = supabase.storage
+        .from("user_icons")
+        .getPublicUrl(path);
       const publicUrl = urlData.publicUrl;
 
       // update local state and persist to users table
@@ -165,7 +176,15 @@ export default function SettingsScreen() {
           style={{ width: 96, height: 96, borderRadius: 48, marginTop: 12 }}
         />
       ) : (
-        <View style={{ width: 96, height: 96, borderRadius: 48, backgroundColor: '#ddd', marginTop: 12 }} />
+        <View
+          style={{
+            width: 96,
+            height: 96,
+            borderRadius: 48,
+            backgroundColor: "#ddd",
+            marginTop: 12,
+          }}
+        />
       )}
       <View style={{ height: 8 }} />
       <Button title="アイコンを選択" onPress={handlePickImage} />
