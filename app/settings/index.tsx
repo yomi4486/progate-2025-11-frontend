@@ -12,12 +12,11 @@ type Profile = Database["public"]["Tables"]["users"]["Row"];
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const [title, setTitle] = useState<string>("設定");
-  const [profile, setProfile] = useState<Profile>({
+  // Use a partial Profile locally so we don't have to provide DB-managed fields like `created_at`.
+  const [profile, setProfile] = useState<Partial<Profile>>({
     name: "",
     bio: "",
     id: "",
-    created_at: "",
     icon_url: "",
   });
   const [loading, setLoading] = useState(false);
@@ -43,17 +42,17 @@ export default function SettingsScreen() {
           .single();
         if (error) throw error;
         if (data) {
+          // Do not store DB-managed `created_at` locally; omit it so we don't send it back on upsert.
           setProfile({
             name: data.name ?? "",
             bio: data.bio ?? "",
             id: data.id ?? "",
-            created_at: data.created_at ?? "",
             icon_url: data.icon_url ?? "",
           });
         }
       } catch (e: PostgrestError | any) {
         if(e["code"] == "PGRST116" && mounted){ // undefined table 'users'
-          setTitle("プロフィールを新規作成しましょう")
+          console.log("users table does not exist yet");
         }else{
           console.error(e);
         }
@@ -72,12 +71,13 @@ export default function SettingsScreen() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
+      // Omit `created_at` from updates so Postgres can apply its DEFAULT value.
       const updates = {
         id: user.id,
-        name: profile.name,
-        bio: profile.bio,
-        icon_url: profile.icon_url,
-      };
+        name: profile.name ?? "",
+        bio: profile.bio ?? null,
+        icon_url: profile.icon_url ?? null,
+      } as any;
       const { error } = await supabase.from("users").upsert(updates);
       if (error) throw error;
       Alert.alert("保存しました");
@@ -99,7 +99,7 @@ export default function SettingsScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title">{title}</ThemedText>
+      <ThemedText type="title">{profile.id ? "設定" : "プロフィールを設定しましょう"}</ThemedText>
       <TextInput
         placeholder="ユーザー名"
         value={profile.name}

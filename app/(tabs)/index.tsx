@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, View } from "react-native";
+import { ActivityIndicator, Alert, Image, Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import ParallaxScrollView from "@/components/parallax-scroll-view";
@@ -17,8 +17,54 @@ import { cardStyles, styles, swipeStyles } from "./index.css";
 type TimelineItem = Database["public"]["Tables"]["timelines"]["Row"];
 
 function TimelineCard({ item }: { item: TimelineItem }) {
+  const [author, setAuthor] = useState<{ name?: string | null; icon_url?: string | null } | null>(null);
+  const [loadingAuthor, setLoadingAuthor] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      if (!item?.author) return;
+      setLoadingAuthor(true);
+      try {
+        const { data, error } = await supabase
+          .from("users")
+          .select("name, icon_url")
+          .eq("id", item.author)
+          .single();
+        if (error) throw error;
+        if (!mounted) return;
+        setAuthor({ name: data.name ?? null, icon_url: data.icon_url ?? null });
+      } catch (e) {
+        console.error("Failed to fetch author", e);
+      } finally {
+        if (mounted) setLoadingAuthor(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [item?.author]);
+
   return (
     <View style={cardStyles.card} key={item.id}>
+      <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
+        {loadingAuthor ? (
+          <ActivityIndicator size="small" />
+        ) : (
+          <>
+            {author?.icon_url ? (
+              <Image
+                source={{ uri: author.icon_url as string }}
+                style={{ width: 36, height: 36, borderRadius: 18, marginRight: 8 }}
+              />
+            ) : (
+              <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: "#ddd", marginRight: 8 }} />
+            )}
+            <ThemedText style={{ fontSize: 14 }}>{author?.name ?? "投稿者"}</ThemedText>
+          </>
+        )}
+      </View>
+
       <ThemedText type="subtitle">{item.title ?? "No title"}</ThemedText>
       <ThemedText>{item.description ?? ""}</ThemedText>
     </View>
@@ -188,9 +234,16 @@ export default function HomeScreen() {
   };
   const closeCreate = () => setModalVisible(false);
 
-  const handleSubmit = (title: string, description: string) => {
+  const handleSubmit = async (title: string, description: string) => {
     console.log("posting", { title, description });
-    // TODO: call supabase to insert timeline item
+    const userId = (await supabase.auth.getUser()).data.user?.id || "";
+    console.log(userId)
+    const res = await supabase.from("timelines").insert({
+      title,
+      description,
+      author: userId
+    });
+    console.log("insert result", res);
   };
 
   return (
