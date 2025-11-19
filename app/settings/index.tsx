@@ -205,7 +205,7 @@ export default function SettingsScreen() {
         />
       )}
       <View style={{ height: 8 }} />
-      <Button title="アイコンを選択" onPress={handlePickImage} />
+      <Button title="アイコンを編集" onPress={handlePickImage} />
 
       <TextInput
         placeholder="ユーザー名"
@@ -233,8 +233,9 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
+  container: { flex: 1, padding: 20  ,alignItems: "center"},
   input: {
+    width: "100%",
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 8,
