@@ -10,7 +10,7 @@ using (true)
 with check (true);
 
 
-
+/*
   create policy "update_objects_by_owner_or_user_icons"
   on "storage"."objects"
   as permissive
@@ -34,6 +34,6 @@ with check (((bucket_id IS DISTINCT FROM 'attachments'::text) AND ((bucket_id IS
 with check (((bucket_id IS DISTINCT FROM 'attachments'::text) AND ((bucket_id IS DISTINCT FROM 'user_icons'::text) OR (regexp_replace("substring"(name, '[^/]+;
 ::text), '\\.[^.]+;
 ::text, ''::text) = (auth.uid())::text))));
-
+*/
 
 

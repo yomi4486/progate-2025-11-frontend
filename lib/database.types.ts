@@ -91,6 +91,45 @@ export type Database = {
         };
         Relationships: [];
       };
+      likes: {
+        Row: {
+          id: string;
+          user_id: string;
+          timeline_id: string;
+          type: "like" | "skip"; // または string
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          timeline_id: string;
+          type: "like" | "skip";
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          timeline_id?: string;
+          type?: "like" | "skip";
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "likes_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "likes_timeline_id_fkey";
+            columns: ["timeline_id"];
+            isOneToOne: false;
+            referencedRelation: "timelines";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -232,3 +271,4 @@ export const Constants = {
     Enums: {},
   },
 } as const;
+
