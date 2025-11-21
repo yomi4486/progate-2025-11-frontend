@@ -10,7 +10,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  View
+  View,
 } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
@@ -200,12 +200,12 @@ export default function SettingsScreen() {
           <View style={styles.iconPlaceholder} />
         )}
         <View style={styles.iconOverlay}>
-          <FontAwesome name="edit" onPress={handlePickImage} size={24}/>
+          <FontAwesome name="edit" onPress={handlePickImage} size={24} />
         </View>
       </View>
       <View style={{ height: 8 }} />
       <Text>名前</Text>
-      
+
       <TextInput
         placeholder="ユーザー名"
         value={profile.name}
@@ -232,7 +232,6 @@ export default function SettingsScreen() {
     </ThemedView>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20 },
