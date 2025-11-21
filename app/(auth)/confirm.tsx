@@ -26,7 +26,8 @@ export default function ConfirmScreen() {
         `${email} 宛に確認メール（マジックリンク）を送信しました。メールの確認を行ってください。`,
       );
     } catch (err: AuthError | unknown) {
-      if (err instanceof Error) Alert.alert("エラー", err.message || String(err));
+      if (err instanceof Error)
+        Alert.alert("エラー", err.message || String(err));
     } finally {
       setLoading(false);
     }
@@ -52,7 +53,8 @@ export default function ConfirmScreen() {
       Alert.alert("確認済み", "メールアドレスの確認が完了しました。");
       router.replace("/login");
     } catch (err: AuthError | unknown) {
-      if (err instanceof Error) Alert.alert("エラー", err.message || String(err));
+      if (err instanceof Error)
+        Alert.alert("エラー", err.message || String(err));
     } finally {
       setLoading(false);
     }
