@@ -1,3 +1,4 @@
+import { FontAwesome } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -7,8 +8,9 @@ import {
   Image,
   Platform,
   StyleSheet,
+  Text,
   TextInput,
-  View,
+  View
 } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
@@ -188,31 +190,30 @@ export default function SettingsScreen() {
       <ThemedText type="title">
         {profile.id ? "設定" : "プロフィールを設定しましょう"}
       </ThemedText>
-      {profile?.icon_url ? (
-        <Image
-          source={{ uri: String(profile.icon_url) }}
-          style={{ width: 96, height: 96, borderRadius: 48, marginTop: 12 }}
-        />
-      ) : (
-        <View
-          style={{
-            width: 96,
-            height: 96,
-            borderRadius: 48,
-            backgroundColor: "#ddd",
-            marginTop: 12,
-          }}
-        />
-      )}
+      <View style={styles.iconContainer}>
+        {profile?.icon_url ? (
+          <Image
+            source={{ uri: String(profile.icon_url) }}
+            style={styles.iconImage}
+          />
+        ) : (
+          <View style={styles.iconPlaceholder} />
+        )}
+        <View style={styles.iconOverlay}>
+          <FontAwesome name="edit" onPress={handlePickImage} size={24}/>
+        </View>
+      </View>
       <View style={{ height: 8 }} />
-      <Button title="アイコンを編集" onPress={handlePickImage} />
-
+      <Text>名前</Text>
+      
       <TextInput
         placeholder="ユーザー名"
         value={profile.name}
         onChangeText={(t) => setProfile((p) => ({ ...p, name: t }))}
         style={styles.input}
       />
+      <View style={{ height: 10 }} />
+      <Text>自己紹介</Text>
       <TextInput
         placeholder="自己紹介"
         value={profile.bio || ""}
@@ -232,16 +233,43 @@ export default function SettingsScreen() {
   );
 }
 
+
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20  ,alignItems: "center"},
+  container: { flex: 1, padding: 20 },
+  iconContainer: {
+    position: "relative",
+    width: 96,
+    height: 96,
+    marginTop: 12,
+  },
+  iconImage: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 48,
+  },
+  iconPlaceholder: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 48,
+    backgroundColor: "#ddd",
+  },
+  iconOverlay: {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: [{ translateX: -20 }, { translateY: -20 }],
+    backgroundColor: "rgba(255, 255, 255, 0.5)",
+    borderRadius: 100,
+    padding: 8,
+  },
   input: {
     width: "100%",
     borderWidth: 1,
     borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 10,
+    borderRadius: 12,
+    padding: 12,
     backgroundColor: "#fff",
-    marginTop: 12,
+    marginTop: 3,
   },
   textarea: { height: 100, textAlignVertical: "top" },
 });
