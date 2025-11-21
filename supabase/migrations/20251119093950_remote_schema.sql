@@ -1179,3 +1179,22 @@
 -- CREATE TRIGGER prefixes_delete_hierarchy AFTER DELETE ON storage.prefixes FOR EACH ROW EXECUTE FUNCTION storage.delete_prefix_hierarchy_trigger();
 
 
+
+-- Create public storage buckets for user icons and attachments
+DO $$
+BEGIN
+	PERFORM storage.create_bucket('user_icons', TRUE);
+EXCEPTION WHEN others THEN
+	RAISE NOTICE 'user_icons bucket creation skipped: %', SQLERRM;
+END
+$$;
+
+DO $$
+BEGIN
+	PERFORM storage.create_bucket('attachments', TRUE);
+EXCEPTION WHEN others THEN
+	RAISE NOTICE 'attachments bucket creation skipped: %', SQLERRM;
+END
+$$;
+
+
