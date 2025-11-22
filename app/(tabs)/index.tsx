@@ -6,6 +6,8 @@ import {
   Modal,
   Pressable,
   ScrollView,
+  StyleSheet,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -36,6 +38,13 @@ function TimelineCard({
   item: TimelineItem;
   onOpen?: (item: TimelineItem) => void;
 }) {
+  const { height: windowHeight } = useWindowDimensions();
+  const cardHeight = Math.round(windowHeight * 0.6);
+  const maxImageHeight = Math.round(windowHeight * 0.35);
+  const [containerWidth, setContainerWidth] = useState<number | null>(null);
+  const [calcedImageHeight, setCalcedImageHeight] = useState<number | null>(
+    null,
+  );
   const [author, setAuthor] = useState<{
     name?: string | null;
     icon_url?: string | null;
@@ -69,7 +78,13 @@ function TimelineCard({
 
   return (
     <Pressable onPress={() => onOpen?.(item)}>
-      <View style={[cardStyles.card, { height: 230 }]}>
+      <View
+        style={[cardStyles.card, { height: cardHeight, overflow: "hidden" }]}
+        onLayout={(e) => {
+          const w = e.nativeEvent.layout.width;
+          if (!containerWidth) setContainerWidth(w);
+        }}
+      >
         <View
           style={{
             flexDirection: "row",
@@ -113,19 +128,65 @@ function TimelineCard({
           {item.description ?? ""}
         </ThemedText>
         {item.attachments && item.attachments.length > 0 && (
-          <Image
-            source={{ uri: item.attachments[0] }}
-            style={{
-              width: "100%",
-              height: 200,
-              borderRadius: 8,
-              marginTop: 12,
-            }}
-            resizeMode="cover"
-          />
+          <>
+            {containerWidth == null ? null : (
+              <RemoteSizedImage
+                uri={item.attachments[0]}
+                containerWidth={containerWidth}
+                maxHeight={maxImageHeight}
+              />
+            )}
+          </>
         )}
       </View>
     </Pressable>
+  );
+}
+
+function RemoteSizedImage({
+  uri,
+  containerWidth,
+  maxHeight,
+}: {
+  uri: string;
+  containerWidth: number;
+  maxHeight: number;
+}) {
+  const [height, setHeight] = useState<number | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    Image.getSize(
+      uri,
+      (w, h) => {
+        if (!mounted) return;
+        const calculated = Math.round((containerWidth * h) / w);
+        setHeight(maxHeight ? Math.min(calculated, maxHeight) : calculated);
+      },
+      () => {
+        if (!mounted) return;
+        // サイズの取得に失敗した時，既定の高さに代用する
+        setHeight(Math.round((containerWidth * 9) / 16));
+      },
+    );
+    return () => {
+      mounted = false;
+    };
+  }, [uri, containerWidth, maxHeight]);
+
+  if (height == null) return null;
+
+  const flattened = StyleSheet.flatten(cardStyles.card) as any;
+  const CARD_PADDING =
+    typeof flattened?.padding === "number" ? flattened.padding : 16;
+  const imageWidth = Math.max(0, containerWidth - CARD_PADDING * 2);
+
+  return (
+    <Image
+      source={{ uri }}
+      style={{ width: imageWidth, height, borderRadius: 8, marginTop: 12 }}
+      resizeMode="cover"
+    />
   );
 }
 
@@ -135,7 +196,8 @@ function TimelineSwiper({
   onCardLeftScreen,
   onOpen,
 }: { items: TimelineItem[] } & SwipeHandlers) {
-  // Keep local stack so we can remove swiped cards and let the next card be interactive
+  const { height: windowHeight } = useWindowDimensions();
+  const containerMinHeight = Math.round(windowHeight * 0.8);
   const [stack, setStack] = React.useState<TimelineItem[]>(items);
 
   React.useEffect(() => {
@@ -149,7 +211,10 @@ function TimelineSwiper({
 
   return (
     <View
-      style={[swipeStyles.container, { position: "relative", minHeight: 420 }]}
+      style={[
+        swipeStyles.container,
+        { position: "relative", minHeight: containerMinHeight },
+      ]}
     >
       {stack.map((item, idx) => {
         const zIndex = stack.length - idx;
@@ -453,7 +518,7 @@ export default function HomeScreen() {
           style={[
             styles.stepContainer,
             styles.centerFill,
-            { paddingTop: 8 + insets.top },
+            { paddingTop: 8 + insets.top, minHeight: 720 },
           ]}
         >
           {loading ? (
@@ -514,6 +579,20 @@ export default function HomeScreen() {
               </Pressable>
             </View>
             <ScrollView>
+              {selectedItem?.attachments &&
+                selectedItem.attachments.length > 0 && (
+                  <Image
+                    source={{ uri: selectedItem.attachments[0] }}
+                    style={{
+                      width: "100%",
+                      aspectRatio: 16 / 9,
+                      maxHeight: 400,
+                      borderRadius: 8,
+                      marginBottom: 12,
+                    }}
+                    resizeMode="cover"
+                  />
+                )}
               <ThemedText>{selectedItem?.description ?? ""}</ThemedText>
             </ScrollView>
           </ThemedView>
