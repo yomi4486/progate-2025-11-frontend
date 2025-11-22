@@ -209,7 +209,9 @@ export default function MessagesScreen() {
       <ThemedText type="title" style={styles.title}>
         投稿にいいねしてくれた人
       </ThemedText>
-      <ThemedText style={{color: "#666", marginBottom: 12, fontSize: 14}}>自分のアイデアや趣味に興味を持ってくれた人たちと話をしてみましょう！</ThemedText>
+      <ThemedText style={{ color: "#666", marginBottom: 12, fontSize: 14 }}>
+        自分のアイデアや趣味に興味を持ってくれた人たちと話をしてみましょう！
+      </ThemedText>
 
       {loading ? (
         <ActivityIndicator />
@@ -223,7 +225,10 @@ export default function MessagesScreen() {
             <TouchableOpacity style={styles.row} onPress={() => openChat(item)}>
               <View style={styles.rowLeft}>
                 {item.icon_url ? (
-                  <Image source={{ uri: item.icon_url }} style={styles.avatar} />
+                  <Image
+                    source={{ uri: item.icon_url }}
+                    style={styles.avatar}
+                  />
                 ) : (
                   <View style={styles.avatarPlaceholder} />
                 )}
@@ -289,7 +294,12 @@ export default function MessagesScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16 },
   title: { marginBottom: 12 },
-  row: { flexDirection: "row", alignItems: "center", paddingVertical: 10, justifyContent: "space-between" },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    justifyContent: "space-between",
+  },
   rowLeft: { flexDirection: "row", alignItems: "center" },
   avatar: { width: 44, height: 44, borderRadius: 22, marginRight: 12 },
   avatarPlaceholder: {
