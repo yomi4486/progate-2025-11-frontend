@@ -454,23 +454,6 @@ export default function HomeScreen() {
 
   return (
     <ThemedView style={{ flex: 1 }}>
-      {checkingProfile && (
-        <View
-          style={{
-            position: "absolute",
-            left: 0,
-            right: 0,
-            top: 0,
-            bottom: 0,
-            zIndex: 2000,
-            backgroundColor: "rgba(0,0,0,0.45)",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <ActivityIndicator size="large" color="#fff" />
-        </View>
-      )}
       {newPostBanner ? (
         <ThemedView
           style={{
@@ -505,7 +488,16 @@ export default function HomeScreen() {
             { paddingTop: insets.top, justifyContent: "space-between" },
           ]}
         >
-          <ThemedText type="title">タイムライン</ThemedText>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <ThemedText type="title" style={{ marginRight: 8 }}>
+              タイムライン
+            </ThemedText>
+
+            {/* リロードアイコン */}
+            <Pressable onPress={fetchTimelines}>
+              <MaterialIcons name="refresh" size={24} color="#666" />
+            </Pressable>
+          </View>
           <Pressable
             onPress={() => router.push("/settings")}
             accessibilityRole="button"
@@ -533,6 +525,7 @@ export default function HomeScreen() {
           )}
         </ThemedView>
       </ParallaxScrollView>
+
       <FAB onPress={openCreate} />
       <FloatingModal
         visible={modalVisible}
