@@ -38,7 +38,11 @@ export function FAB({
           pressed && styles.buttonPressed,
         ]}
       >
-        <MaterialIcons name="add" size={Math.round(size * 0.5)} color="#fff" />
+        <MaterialIcons
+          name="add"
+          size={Math.round(size * 0.5)}
+          color={colorScheme === "dark" ? "#000" : "#fff"}
+        />
       </Pressable>
     </View>
   );

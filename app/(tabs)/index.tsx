@@ -172,15 +172,15 @@ function TimelineCard({
                   }}
                 />
               )}
-              <ThemedText style={{ fontSize: 14 }}>
+              <ThemedText style={{ fontSize: 14 }} darkColor="#000">
                 {author?.name ?? "投稿者"}
               </ThemedText>
             </>
           )}
         </View>
 
-        <ThemedText type="subtitle">{item.title ?? "No title"}</ThemedText>
-        <ThemedText numberOfLines={5} ellipsizeMode="tail">
+        <ThemedText type="subtitle" darkColor="#000">{item.title ?? "No title"}</ThemedText>
+        <ThemedText numberOfLines={5} ellipsizeMode="tail" darkColor="#000">
           {item.description ?? ""}
         </ThemedText>
 
@@ -557,7 +557,7 @@ export default function HomeScreen() {
                 marginBottom: 12,
               }}
             >
-              <ThemedText type="title">
+              <ThemedText type="title" darkColor="#000">
                 {selectedItem?.title ?? "投稿"}
               </ThemedText>
               <Pressable onPress={closePost} accessibilityRole="button">
@@ -583,7 +583,7 @@ export default function HomeScreen() {
                     />
                   )}
 
-                <ThemedText>{selectedItem?.description ?? ""}</ThemedText>
+                <ThemedText darkColor="#000">{selectedItem?.description ?? ""}</ThemedText>
               </View>
             </ScrollView>
           </ThemedView>

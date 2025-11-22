@@ -7,17 +7,17 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Image } from "expo-image";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  FlatList,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  RefreshControl,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    FlatList,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    Pressable,
+    RefreshControl,
+    StyleSheet,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -239,9 +239,9 @@ export default function MessagesScreen() {
         >
           <View style={styles.chatHeader}>
             <Pressable onPress={closeChat}>
-              <ThemedText>閉じる</ThemedText>
+              <ThemedText darkColor="#000">閉じる</ThemedText>
             </Pressable>
-            <ThemedText type="title">{otherUser?.name}</ThemedText>
+            <ThemedText type="title" darkColor="#000">{otherUser?.name}</ThemedText>
             <View style={{ width: 60 }} />
           </View>
           <FlatList
