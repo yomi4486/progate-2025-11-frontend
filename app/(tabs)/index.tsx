@@ -336,7 +336,11 @@ export default function HomeScreen() {
   };
   const closeCreate = () => setModalVisible(false);
 
-  const handleSubmit = async (title: string, description: string,imageUrls: string[] | null) => {
+  const handleSubmit = async (
+    title: string,
+    description: string,
+    imageUrls: string[] | null,
+  ) => {
     console.log("posting", { title, description });
     const userId = (await supabase.auth.getUser()).data.user?.id || "";
     console.log(userId);

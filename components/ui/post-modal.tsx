@@ -5,8 +5,16 @@ import { supabase } from "@/lib/supabase";
 import { FontAwesome } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
-import { Alert, Image, Modal, Platform, Pressable, StyleSheet, TextInput, View } from "react-native";
-
+import {
+  Alert,
+  Image,
+  Modal,
+  Platform,
+  Pressable,
+  StyleSheet,
+  TextInput,
+  View,
+} from "react-native";
 
 export function FloatingModal({
   visible,
@@ -15,13 +23,17 @@ export function FloatingModal({
 }: {
   visible: boolean;
   onClose: () => void;
-  onSubmit: (title: string, description: string, imageUrls: string[] | null) => void;
+  onSubmit: (
+    title: string,
+    description: string,
+    imageUrls: string[] | null,
+  ) => void;
 }) {
   const modalBg = useThemeColor({}, "background");
   const [title, setTitle] = React.useState("");
   const [description, setDescription] = React.useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null); // 画像のプレビュー用
-  const [loading, setLoading] = useState(false);  
+  const [loading, setLoading] = useState(false);
 
   const UploadImage = async () => {
     try {
@@ -52,7 +64,7 @@ export function FloatingModal({
       }
     }
   };
-  
+
   const submit = async () => {
     if (!title || !description) {
       Alert.alert("エラー", "タイトルと説明を入力してください");
@@ -105,7 +117,6 @@ export function FloatingModal({
     }
   };
 
-
   return (
     <Modal
       visible={visible}
@@ -125,19 +136,16 @@ export function FloatingModal({
           {/* attachments */}
           <View style={styles.iconContainer}>
             {selectedImage ? (
-              <Image
-                source={{ uri: selectedImage }}
-                style={styles.iconImage}
-              />
+              <Image source={{ uri: selectedImage }} style={styles.iconImage} />
             ) : (
               <View style={styles.iconPlaceholder} />
-            )}          
+            )}
             <View style={styles.iconOverlay}>
               <FontAwesome name="upload" onPress={UploadImage} size={24} />
             </View>
             {/* <Button title="画像を投稿" onPress={UploadImage} color="#d9534f" /> */}
           </View>
-          
+
           <TextInput
             value={description}
             onChangeText={setDescription}
@@ -154,7 +162,9 @@ export function FloatingModal({
               style={[styles.actionButton, styles.primary]}
               disabled={loading}
             >
-              <ThemedText style={{ color: "#fff" }}>{loading ? "投稿中..." : "投稿"}</ThemedText>
+              <ThemedText style={{ color: "#fff" }}>
+                {loading ? "投稿中..." : "投稿"}
+              </ThemedText>
             </Pressable>
           </View>
         </ThemedView>
@@ -224,5 +234,5 @@ const styles = StyleSheet.create({
   iconImage: {
     width: "100%",
     height: "100%",
-  }
+  },
 });
