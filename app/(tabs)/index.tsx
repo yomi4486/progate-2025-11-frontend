@@ -22,7 +22,7 @@ import { supabase } from "@/lib/supabase";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useRouter } from "expo-router";
 import TinderCard from "react-tinder-card";
-import { cardStyles, styles, swipeStyles } from "./index.css";
+import { cardStyles, styles, swipeStyles } from "../(styles)/index.css";
 
 type TimelineItem = Database["public"]["Tables"]["timelines"]["Row"];
 type SwipeHandlers = {
@@ -481,7 +481,16 @@ export default function HomeScreen() {
             { paddingTop: insets.top, justifyContent: "space-between" },
           ]}
         >
-          <ThemedText type="title">タイムライン</ThemedText>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <ThemedText type="title" style={{ marginRight: 8 }}>
+              タイムライン
+            </ThemedText>
+
+            {/* リロードアイコン */}
+            <Pressable onPress={fetchTimelines}>
+              <MaterialIcons name="refresh" size={24} color="#666" />
+            </Pressable>
+          </View>
           <Pressable
             onPress={() => router.push("/settings")}
             accessibilityRole="button"
