@@ -1,5 +1,13 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Alert, Image, Pressable, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Modal,
+  Pressable,
+  ScrollView,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import ParallaxScrollView from "@/components/parallax-scroll-view";
@@ -18,9 +26,16 @@ type TimelineItem = Database["public"]["Tables"]["timelines"]["Row"];
 type SwipeHandlers = {
   onSwipe?: (id: string, direction: string) => void;
   onCardLeftScreen?: (id: string) => void;
+  onOpen?: (item: TimelineItem) => void;
 };
 
-function TimelineCard({ item }: { item: TimelineItem }) {
+function TimelineCard({
+  item,
+  onOpen,
+}: {
+  item: TimelineItem;
+  onOpen?: (item: TimelineItem) => void;
+}) {
   const [author, setAuthor] = useState<{
     name?: string | null;
     icon_url?: string | null;
@@ -53,58 +68,64 @@ function TimelineCard({ item }: { item: TimelineItem }) {
   }, [item?.author]);
 
   return (
-    <View style={cardStyles.card} key={item.id}>
-      <View
-        style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}
-      >
-        {loadingAuthor ? (
-          <ActivityIndicator size="small" />
-        ) : (
-          <>
-            {author?.icon_url ? (
-              <Image
-                source={{ uri: author.icon_url as string }}
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 18,
-                  marginRight: 8,
-                }}
-              />
-            ) : (
-              <View
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 18,
-                  backgroundColor: "#ddd",
-                  marginRight: 8,
-                }}
-              />
-            )}
-            <ThemedText style={{ fontSize: 14 }}>
-              {author?.name ?? "投稿者"}
-            </ThemedText>
-          </>
+    <Pressable onPress={() => onOpen?.(item)}>
+      <View style={[cardStyles.card, { height: 230 }]}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            marginBottom: 8,
+          }}
+        >
+          {loadingAuthor ? (
+            <ActivityIndicator size="small" />
+          ) : (
+            <>
+              {author?.icon_url ? (
+                <Image
+                  source={{ uri: author.icon_url as string }}
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 18,
+                    marginRight: 8,
+                  }}
+                />
+              ) : (
+                <View
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 18,
+                    backgroundColor: "#ddd",
+                    marginRight: 8,
+                  }}
+                />
+              )}
+              <ThemedText style={{ fontSize: 14 }}>
+                {author?.name ?? "投稿者"}
+              </ThemedText>
+            </>
+          )}
+        </View>
+        <ThemedText type="subtitle">{item.title ?? "No title"}</ThemedText>
+        <ThemedText numberOfLines={5} ellipsizeMode="tail">
+          {item.description ?? ""}
+        </ThemedText>
+        {item.attachments && item.attachments.length > 0 && (
+          <Image
+            source={{ uri: item.attachments[0] }}
+            style={{
+              width: "100%",
+              height: 200,
+              borderRadius: 8,
+              marginTop: 12,
+            }}
+            resizeMode="cover"
+          />
         )}
       </View>
-
-      <ThemedText type="subtitle">{item.title ?? "No title"}</ThemedText>
-      <ThemedText>{item.description ?? ""}</ThemedText>
-
-      {item.attachments && item.attachments.length > 0 && (
-        <Image
-          source={{ uri: item.attachments[0] }}
-          style={{
-            width: "100%",
-            height: 200,
-            borderRadius: 8,
-            marginTop: 12,
-          }}
-          resizeMode="cover"
-        />
-      )}
-    </View>
+    </Pressable>
   );
 }
 
@@ -112,6 +133,7 @@ function TimelineSwiper({
   items,
   onSwipe,
   onCardLeftScreen,
+  onOpen,
 }: { items: TimelineItem[] } & SwipeHandlers) {
   // Keep local stack so we can remove swiped cards and let the next card be interactive
   const [stack, setStack] = React.useState<TimelineItem[]>(items);
@@ -144,7 +166,7 @@ function TimelineSwiper({
               onSwipe={(dir: string) => onSwipe?.(item.id, dir)}
               onCardLeftScreen={() => handleCardLeftInternal(item.id)}
             >
-              <TimelineCard item={item} />
+              <TimelineCard item={item} onOpen={onOpen} />
             </TinderCard>
           </View>
         );
@@ -287,6 +309,8 @@ export default function HomeScreen() {
   };
 
   const [modalVisible, setModalVisible] = useState(false);
+  const [postModalVisible, setPostModalVisible] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<TimelineItem | null>(null);
   const [checkingProfile, setCheckingProfile] = useState(false);
 
   const openCreate = async () => {
@@ -335,6 +359,16 @@ export default function HomeScreen() {
     }
   };
   const closeCreate = () => setModalVisible(false);
+
+  const openPost = (item: TimelineItem) => {
+    setSelectedItem(item);
+    setPostModalVisible(true);
+  };
+
+  const closePost = () => {
+    setSelectedItem(null);
+    setPostModalVisible(false);
+  };
 
   const handleSubmit = async (
     title: string,
@@ -429,6 +463,7 @@ export default function HomeScreen() {
               items={items}
               onSwipe={handleSwipe}
               onCardLeftScreen={handleCardLeft}
+              onOpen={openPost}
             />
           )}
         </ThemedView>
@@ -439,6 +474,51 @@ export default function HomeScreen() {
         onClose={closeCreate}
         onSubmit={handleSubmit}
       />
+
+      <Modal
+        visible={postModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={closePost}
+      >
+        <ThemedView
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            padding: 16,
+          }}
+        >
+          <ThemedView
+            style={{
+              width: "100%",
+              maxHeight: "90%",
+              borderRadius: 8,
+              padding: 16,
+              backgroundColor: "#fff",
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 12,
+              }}
+            >
+              <ThemedText type="title">
+                {selectedItem?.title ?? "投稿"}
+              </ThemedText>
+              <Pressable onPress={closePost} accessibilityRole="button">
+                <MaterialIcons name="close" size={24} color="#333" />
+              </Pressable>
+            </View>
+            <ScrollView>
+              <ThemedText>{selectedItem?.description ?? ""}</ThemedText>
+            </ScrollView>
+          </ThemedView>
+        </ThemedView>
+      </Modal>
     </ThemedView>
   );
 }
