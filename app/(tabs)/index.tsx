@@ -148,7 +148,9 @@ function TimelineCard({
     typeof flattened?.padding === "number" ? flattened.padding : 16;
 
   const hasImage = !!(
-    item.attachments && item.attachments.length > 0 && containerWidth != null
+    item.attachments &&
+    item.attachments.length > 0 &&
+    containerWidth != null
   );
 
   return (
@@ -227,7 +229,12 @@ function TimelineCard({
             <ThemedText
               numberOfLines={5}
               ellipsizeMode="tail"
-              style={{ color: "#fff", fontSize: 24, marginTop: 4,lineHeight: 30,  }}
+              style={{
+                color: "#fff",
+                fontSize: 24,
+                marginTop: 4,
+                lineHeight: 30,
+              }}
             >
               {item.description ?? ""}
             </ThemedText>
