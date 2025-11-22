@@ -103,7 +103,7 @@ export default function MessagesScreen() {
     return () => {
       try {
         channel.unsubscribe();
-      } catch (_) { }
+      } catch (_) {}
     };
   }, [chatOpen, currentUserId, otherUser]);
   const openChat = async (user: UserRow) => {
