@@ -57,15 +57,17 @@ export default function AccountScreen() {
           .eq("author", user.id)
           .order("created_at", { ascending: false });
         if (timelineError) throw timelineError;
-        
+
         // 3. いいねした投稿を取得
         const { data: likedData, error: likedError } = await supabase
           .from("likes")
-          .select(`
+          .select(
+            `
             timelines (
               *
             )
-          `)
+          `,
+          )
           .eq("user_id", user.id)
           .eq("type", "like") // 'like'のものだけ
           .order("created_at", { ascending: false }); // 最近いいねした順
@@ -75,14 +77,13 @@ export default function AccountScreen() {
         if (!mounted) return;
 
         setPosts((timelineData as unknown as TimelineItem[]) || []);
-        
+
         // Supabaseからの返り値は { timelines: {...} } の配列になっているので,imelinesの中身だけを取り出して配列にする
         const formattedLikedPosts = likedData
           ?.map((item) => item.timelines)
           .filter((t) => t !== null) as unknown as TimelineItem[];
-          
-        setLikedPosts(formattedLikedPosts || []);
 
+        setLikedPosts(formattedLikedPosts || []);
       } catch (e: unknown) {
         if (e instanceof Error) {
           console.error("Account load failed", e);
@@ -199,7 +200,6 @@ export default function AccountScreen() {
             </ThemedText>
             {renderPostList(likedPosts, "まだ「いいね」した投稿はありません。")}
           </View>
-
         </ThemedView>
       )}
     </ParallaxScrollView>

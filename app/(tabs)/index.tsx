@@ -220,7 +220,7 @@ export default function HomeScreen() {
           } catch (e) {
             console.error("Realtime payload handling failed", e);
           }
-        }
+        },
       )
       .subscribe();
 
@@ -306,7 +306,7 @@ export default function HomeScreen() {
               text: "設定する",
               onPress: () => router.push("/settings"),
             },
-          ]
+          ],
         );
         return;
       }
