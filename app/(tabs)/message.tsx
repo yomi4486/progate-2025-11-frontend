@@ -247,7 +247,6 @@ export default function MessagesScreen() {
             contentContainerStyle={{ padding: 12 }}
           />
           <View style={styles.composer}>
-
             <TextInput
               value={newMessage}
               onChangeText={setNewMessage}
