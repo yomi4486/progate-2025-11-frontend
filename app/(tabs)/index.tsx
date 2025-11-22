@@ -29,7 +29,13 @@ type SwipeHandlers = {
   onOpen?: (item: TimelineItem) => void;
 };
 
-function TimelineCard({ item, onOpen }: { item: TimelineItem; onOpen?: (item: TimelineItem) => void }) {
+function TimelineCard({
+  item,
+  onOpen,
+}: {
+  item: TimelineItem;
+  onOpen?: (item: TimelineItem) => void;
+}) {
   const [author, setAuthor] = useState<{
     name?: string | null;
     icon_url?: string | null;
@@ -63,43 +69,47 @@ function TimelineCard({ item, onOpen }: { item: TimelineItem; onOpen?: (item: Ti
 
   return (
     <Pressable onPress={() => onOpen?.(item)}>
-      <View style={[cardStyles.card, { height: 230 }]}> 
-      <View
-        style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}
-      >
-        {loadingAuthor ? (
-          <ActivityIndicator size="small" />
-        ) : (
-          <>
-            {author?.icon_url ? (
-              <Image
-                source={{ uri: author.icon_url as string }}
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 18,
-                  marginRight: 8,
-                }}
-              />
-            ) : (
-              <View
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 18,
-                  backgroundColor: "#ddd",
-                  marginRight: 8,
-                }}
-              />
-            )}
-            <ThemedText style={{ fontSize: 14 }}>
-              {author?.name ?? "投稿者"}
-            </ThemedText>
-          </>
-        )}
-      </View>
+      <View style={[cardStyles.card, { height: 230 }]}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            marginBottom: 8,
+          }}
+        >
+          {loadingAuthor ? (
+            <ActivityIndicator size="small" />
+          ) : (
+            <>
+              {author?.icon_url ? (
+                <Image
+                  source={{ uri: author.icon_url as string }}
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 18,
+                    marginRight: 8,
+                  }}
+                />
+              ) : (
+                <View
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 18,
+                    backgroundColor: "#ddd",
+                    marginRight: 8,
+                  }}
+                />
+              )}
+              <ThemedText style={{ fontSize: 14 }}>
+                {author?.name ?? "投稿者"}
+              </ThemedText>
+            </>
+          )}
+        </View>
 
-      <ThemedText type="subtitle">{item.title ?? "No title"}</ThemedText>
+        <ThemedText type="subtitle">{item.title ?? "No title"}</ThemedText>
         <ThemedText numberOfLines={5} ellipsizeMode="tail">
           {item.description ?? ""}
         </ThemedText>
@@ -139,7 +149,7 @@ function TimelineSwiper({
             key={item.id}
             style={[swipeStyles.cardWrapper, { zIndex, top: offsetTop }]}
           >
-              <TinderCard
+            <TinderCard
               // 20251121_追加_preventSwipeを追加することで、上下スワイプを無効化し、左右の検知精度を上げた
               preventSwipe={["up", "down"]}
               onSwipe={(dir: string) => onSwipe?.(item.id, dir)}
@@ -449,11 +459,40 @@ export default function HomeScreen() {
         onSubmit={handleSubmit}
       />
 
-      <Modal visible={postModalVisible} animationType="slide" transparent={true} onRequestClose={closePost}>
-        <ThemedView style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 16 }}>
-          <ThemedView style={{ width: "100%", maxHeight: "90%", borderRadius: 8, padding: 16, backgroundColor: "#fff" }}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <ThemedText type="title">{selectedItem?.title ?? "投稿"}</ThemedText>
+      <Modal
+        visible={postModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={closePost}
+      >
+        <ThemedView
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            padding: 16,
+          }}
+        >
+          <ThemedView
+            style={{
+              width: "100%",
+              maxHeight: "90%",
+              borderRadius: 8,
+              padding: 16,
+              backgroundColor: "#fff",
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 12,
+              }}
+            >
+              <ThemedText type="title">
+                {selectedItem?.title ?? "投稿"}
+              </ThemedText>
               <Pressable onPress={closePost} accessibilityRole="button">
                 <MaterialIcons name="close" size={24} color="#333" />
               </Pressable>
