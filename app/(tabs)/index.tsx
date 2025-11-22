@@ -108,12 +108,23 @@ function TimelineCard({
             </>
           )}
         </View>
-
-        <ThemedText type="subtitle">{item.title ?? "No title"}</ThemedText>
+      <ThemedText type="subtitle">{item.title ?? "No title"}</ThemedText>
         <ThemedText numberOfLines={5} ellipsizeMode="tail">
           {item.description ?? ""}
         </ThemedText>
-      </View>
+      {item.attachments && item.attachments.length > 0 && (
+        <Image
+          source={{ uri: item.attachments[0] }}
+          style={{
+            width: "100%",
+            height: 200,
+            borderRadius: 8,
+            marginTop: 12,
+          }}
+          resizeMode="cover"
+        />
+      )}
+    </View>
     </Pressable>
   );
 }
@@ -359,7 +370,11 @@ export default function HomeScreen() {
     setPostModalVisible(false);
   };
 
-  const handleSubmit = async (title: string, description: string) => {
+  const handleSubmit = async (
+    title: string,
+    description: string,
+    imageUrls: string[] | null,
+  ) => {
     console.log("posting", { title, description });
     const userId = (await supabase.auth.getUser()).data.user?.id || "";
     console.log(userId);
@@ -367,6 +382,7 @@ export default function HomeScreen() {
       title,
       description,
       author: userId,
+      attachments: imageUrls,
     });
     console.log("insert result", res);
   };

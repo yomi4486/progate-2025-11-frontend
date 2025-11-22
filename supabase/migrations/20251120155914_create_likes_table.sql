@@ -1,6 +1,6 @@
 -- up.sql (テーブルを作成するSQL)
 create table public.likes (
-    id uuid primary key default uuid_generate_v4(),
+    id uuid primary key default gen_random_uuid(),
     user_id uuid references auth.users not null, -- 認証済みユーザーを参照
     timeline_id uuid references public.timelines not null,
     type text check (type in ('like', 'skip')) not null, -- 'like'か'skip'のみ許可
