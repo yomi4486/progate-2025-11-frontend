@@ -24,13 +24,13 @@ export default function TabLayout() {
 
         if (!session) {
           // Not signed in -> go to login
-          router.replace({ pathname: "/login" });
-          return;
+          throw new Error("No session");
         }
 
         if (mounted) setChecking(false);
       } catch (e) {
-        router.replace("/login");
+        console.log("Session expired, redirecting to login");
+        router.replace({ pathname: "/login" });
       }
     };
 
@@ -38,7 +38,8 @@ export default function TabLayout() {
 
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) {
-        router.replace("/login");
+        console.log("Session expired, redirecting to login");
+        router.replace({ pathname: "/login" });
       }
     });
 

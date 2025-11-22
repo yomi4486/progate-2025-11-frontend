@@ -51,7 +51,7 @@ export default function ConfirmScreen() {
       });
       if (error) throw error;
       Alert.alert("確認済み", "メールアドレスの確認が完了しました。");
-      router.replace("/login");
+      router.replace({ pathname: "/login" });
     } catch (err: AuthError | unknown) {
       if (err instanceof Error)
         Alert.alert("エラー", err.message || String(err));
@@ -89,7 +89,10 @@ export default function ConfirmScreen() {
         disabled={loading || !email}
       />
       <View style={{ height: 12 }} />
-      <Button title="ログインに戻る" onPress={() => router.replace("/login")} />
+      <Button
+        title="ログインに戻る"
+        onPress={() => router.replace({ pathname: "/login" })}
+      />
     </ThemedView>
   );
 }

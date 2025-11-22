@@ -41,7 +41,7 @@ export default function SettingsScreen() {
         } = await supabase.auth.getUser();
         if (!mounted) return;
         if (!user) {
-          router.replace("/login");
+          router.replace({ pathname: "/login" });
           return;
         }
         // fetch profile from 'profiles' table if exists
@@ -177,7 +177,7 @@ export default function SettingsScreen() {
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
-      router.replace("/login");
+      router.replace({ pathname: "/login" });
     } catch (e: unknown) {
       if (e instanceof Error) {
         Alert.alert("エラー", e.message || String(e));

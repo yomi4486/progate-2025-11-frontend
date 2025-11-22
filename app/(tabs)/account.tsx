@@ -42,7 +42,7 @@ export default function AccountScreen() {
       const { data: userData } = await supabase.auth.getUser();
       const user = userData.user;
       if (!user) {
-        router.replace("/login");
+        router.replace({ pathname: "/login" });
         return;
       }
 

@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  ImageBackground,
   Modal,
   Pressable,
   ScrollView,
@@ -131,69 +132,183 @@ function TimelineCard({
     };
   }, [item?.author]);
 
+  function formatCreatedAt(val: string | Date | null | undefined) {
+    if (!val) return "";
+    const d = new Date(val as any);
+    if (isNaN(d.getTime())) return "";
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    const hh = String(d.getHours()).padStart(2, "0");
+    const min = String(d.getMinutes()).padStart(2, "0");
+    return `${mm}/${dd} ${hh}:${min}`;
+  }
+
+  const flattened = StyleSheet.flatten(cardStyles.card) as any;
+  const CARD_PADDING =
+    typeof flattened?.padding === "number" ? flattened.padding : 16;
+
+  const hasImage = !!(
+    item.attachments &&
+    item.attachments.length > 0 &&
+    containerWidth != null
+  );
+
   return (
     <Pressable onPress={() => onOpen?.(item)}>
-      <View
-        style={[cardStyles.card, { height: cardHeight, overflow: "hidden" }]}
-        onLayout={(e) => {
-          const w = e.nativeEvent.layout.width;
-          if (!containerWidth) setContainerWidth(w);
-        }}
-      >
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            marginBottom: 8,
+      {hasImage ? (
+        <ImageBackground
+          source={{ uri: item.attachments![0] }}
+          resizeMode="cover"
+          imageStyle={{ borderRadius: flattened?.borderRadius ?? 12 }}
+          style={[cardStyles.card, { height: cardHeight, overflow: "hidden" }]}
+          onLayout={(e) => {
+            const w = e.nativeEvent.layout.width;
+            if (!containerWidth) setContainerWidth(w);
           }}
         >
-          {loadingAuthor ? (
-            <ActivityIndicator size="small" />
-          ) : (
-            <>
-              {author?.icon_url ? (
-                <Image
-                  source={{ uri: author.icon_url as string }}
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 18,
-                    marginRight: 8,
-                  }}
-                />
+          {/* dark overlay between image and content */}
+          <View
+            style={{
+              ...StyleSheet.absoluteFillObject,
+              backgroundColor: "rgba(0,0,0,0.5)",
+              borderRadius: flattened?.borderRadius ?? 12,
+            }}
+          />
+
+          <View style={{ padding: CARD_PADDING, zIndex: 1 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginBottom: 8,
+              }}
+            >
+              {loadingAuthor ? (
+                <ActivityIndicator size="small" color="#fff" />
               ) : (
-                <View
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 18,
-                    backgroundColor: "#ddd",
-                    marginRight: 8,
-                  }}
-                />
+                <>
+                  {author?.icon_url ? (
+                    <Image
+                      source={{ uri: author.icon_url }}
+                      style={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: 18,
+                        marginRight: 8,
+                      }}
+                    />
+                  ) : (
+                    <View
+                      style={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: 18,
+                        backgroundColor: "rgba(255,255,255,0.2)",
+                        marginRight: 8,
+                      }}
+                    />
+                  )}
+                  <View>
+                    <ThemedText style={{ fontSize: 24, color: "#fff" }}>
+                      {author?.name ?? "投稿者"}
+                    </ThemedText>
+                    <ThemedText style={{ fontSize: 12, color: "#bbb" }}>
+                      {formatCreatedAt(item.created_at)}
+                    </ThemedText>
+                  </View>
+                </>
               )}
-              <ThemedText style={{ fontSize: 14 }}>
-                {author?.name ?? "投稿者"}
-              </ThemedText>
-            </>
-          )}
+            </View>
+
+            <ThemedText
+              type="subtitle"
+              style={{ color: "#fff", fontSize: 36, marginBottom: 8 }}
+            >
+              {item.title ?? "No title"}
+            </ThemedText>
+            <ThemedText
+              numberOfLines={5}
+              ellipsizeMode="tail"
+              style={{
+                color: "#fff",
+                fontSize: 24,
+                marginTop: 4,
+                lineHeight: 30,
+              }}
+            >
+              {item.description ?? ""}
+            </ThemedText>
+          </View>
+        </ImageBackground>
+      ) : (
+        <View
+          style={[cardStyles.card, { height: cardHeight, overflow: "hidden" }]}
+          onLayout={(e) => {
+            const w = e.nativeEvent.layout.width;
+            if (!containerWidth) setContainerWidth(w);
+          }}
+        >
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              marginBottom: 8,
+            }}
+          >
+            {loadingAuthor ? (
+              <ActivityIndicator size="small" />
+            ) : (
+              <>
+                {author?.icon_url ? (
+                  <Image
+                    source={{ uri: author.icon_url as string }}
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 18,
+                      marginRight: 8,
+                    }}
+                  />
+                ) : (
+                  <View
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 18,
+                      backgroundColor: "#ddd",
+                      marginRight: 8,
+                    }}
+                  />
+                )}
+                <ThemedText style={{ fontSize: 14 }}>
+                  {author?.name ?? "投稿者"}
+                </ThemedText>
+              </>
+            )}
+          </View>
+
+          <ThemedText type="subtitle" style={{ fontSize: 18, marginBottom: 8 }}>
+            {item.title ?? "No title"}
+          </ThemedText>
+          <ThemedText
+            numberOfLines={5}
+            ellipsizeMode="tail"
+            style={{ fontSize: 15, marginTop: 4 }}
+          >
+            {item.description ?? ""}
+          </ThemedText>
+
+          {item.attachments &&
+            item.attachments.length > 0 &&
+            containerWidth != null && (
+              <RemoteSizedImage
+                uri={item.attachments[0]}
+                containerWidth={containerWidth}
+                maxHeight={maxImageHeight}
+              />
+            )}
         </View>
-
-        <ThemedText type="subtitle">{item.title ?? "No title"}</ThemedText>
-        <ThemedText numberOfLines={5} ellipsizeMode="tail">
-          {item.description ?? ""}
-        </ThemedText>
-
-        {item.attachments &&
-          item.attachments.length > 0 &&
-          containerWidth != null && (
-            <RemoteSizedImage
-              uri={item.attachments[0]}
-              containerWidth={containerWidth}
-              maxHeight={maxImageHeight}
-            />
-          )}
-      </View>
+      )}
     </Pressable>
   );
 }
