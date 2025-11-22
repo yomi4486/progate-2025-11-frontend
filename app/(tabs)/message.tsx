@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef } from "react";
 import { Image } from "expo-image";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -13,8 +13,8 @@ import {
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { supabase } from "@/lib/supabase";
 import { Database } from "@/lib/database.types";
+import { supabase } from "@/lib/supabase";
 
 type UserRow = Database["public"]["Tables"]["users"]["Row"];
 type MessageRow = Database["public"]["Tables"]["messages"]["Row"];
@@ -62,9 +62,11 @@ export default function MessagesScreen() {
           .select("user_id")
           .in("timeline_id", timelineIds);
 
-        const userIds = Array.from(
+        let userIds = Array.from(
           new Set((likes || []).map((l: any) => l.user_id)),
         );
+        // exclude current user from likers list
+        userIds = userIds.filter((id: string) => id !== me.id);
         if (userIds.length === 0) {
           setLikers([]);
           return;
