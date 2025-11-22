@@ -69,7 +69,7 @@ function TimelineCard({
 
   return (
     <Pressable onPress={() => onOpen?.(item)}>
-      <View style={[cardStyles.card, { height: 230 }]}>
+      <View style={[cardStyles.card, { height: 540 }]}>
         <View
           style={{
             flexDirection: "row",
@@ -149,7 +149,7 @@ function TimelineSwiper({
 
   return (
     <View
-      style={[swipeStyles.container, { position: "relative", minHeight: 420 }]}
+      style={[swipeStyles.container, { position: "relative", minHeight: 720 }]}
     >
       {stack.map((item, idx) => {
         const zIndex = stack.length - idx;
@@ -453,7 +453,7 @@ export default function HomeScreen() {
           style={[
             styles.stepContainer,
             styles.centerFill,
-            { paddingTop: 8 + insets.top },
+            { paddingTop: 8 + insets.top, minHeight: 720 },
           ]}
         >
           {loading ? (
