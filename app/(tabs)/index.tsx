@@ -126,6 +126,8 @@ function TimelineSwiper({
             style={[swipeStyles.cardWrapper, { zIndex, top: offsetTop }]}
           >
             <TinderCard
+              // 20251121_追加_preventSwipeを追加することで、上下スワイプを無効化し、左右の検知精度を上げた
+              preventSwipe={["up", "down"]}
               onSwipe={(dir: string) => onSwipe?.(item.id, dir)}
               onCardLeftScreen={() => handleCardLeftInternal(item.id)}
             >
@@ -145,14 +147,49 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [newPostBanner, setNewPostBanner] = useState<string | null>(null);
 
+  // 20251121_修正_スワイプ済みのデータを除外して取得する
   const fetchTimelines = useCallback(async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        // ログインしていない場合（通常はリダイレクトされるが念の為）
+        const { data, error } = await supabase
+          .from("timelines")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+        setItems((data as unknown as TimelineItem[]) || []);
+        return;
+      }
+
+      // 自分が評価済みのIDリストを取得
+      const { data: myLikes, error: likesError } = await supabase
+        .from("likes")
+        .select("timeline_id")
+        .eq("user_id", user.id);
+
+      if (likesError) throw likesError;
+
+      const swipedIds = myLikes?.map((l) => l.timeline_id) || [];
+
+      // timelinesを取得（評価済みを除外）
+      let query = supabase
         .from("timelines")
         .select("*")
         .order("created_at", { ascending: false });
+
+      if (swipedIds.length > 0) {
+        // not('id', 'in', [配列]) で除外
+        query = query.not("id", "in", `(${swipedIds.join(",")})`);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
+
       setItems((data as unknown as TimelineItem[]) || []);
     } catch (err) {
       console.error("Failed to fetch timelines", err);
@@ -175,9 +212,9 @@ export default function HomeScreen() {
         (payload) => {
           try {
             const newRow = payload.new as TimelineItem;
-            // Prepend to local items so UI updates immediately
+            // リアルタイム更新時は，自分がスワイプしたかどうかのチェックが難しいので
+            // とりあえず表示させる（または厳密にやるならここでlikesをチェックする）
             setItems((prev) => [newRow, ...prev]);
-            // Show banner message for 5 seconds
             setNewPostBanner("新しい投稿があります！");
             setTimeout(() => setNewPostBanner(null), 5000);
           } catch (e) {
@@ -196,13 +233,44 @@ export default function HomeScreen() {
     };
   }, []);
 
-  const handleSwipe = (id: string, direction: string) => {
-    // small abstraction: future logic (save vote, analytics) goes here
-    console.log("swiped", id, direction);
+  // 20251121_修正_スワイプ時にDBへ保存する処理
+  const handleSwipe = async (id: string, direction: string) => {
+    console.log("swiped detected:", id, direction);
+
+    // directionは 'left' | 'right' | 'up' | 'down' が来る
+    // 右なら like, それ以外（左）なら skip とする
+    const type = direction === "right" ? "like" : "skip";
+
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // likesテーブルに保存
+      const { error } = await supabase.from("likes").insert({
+        user_id: user.id,
+        timeline_id: id,
+        type: type,
+      });
+
+      if (error) {
+        // 重複エラー(23505)などは無視してよい
+        if (error.code !== "23505") {
+          console.error("スワイプ保存エラー", error);
+        }
+      } else {
+        console.log(`Saved ${type} for post ${id}`);
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const handleCardLeft = (id: string) => {
-    console.log("card left screen", id);
+    // ここは画面から消えた後の処理。
+    // 今回は handleSwipe でDB保存を行っているので、ここではログ出しのみでOK
+    console.log("card left screen completely", id);
   };
 
   const [modalVisible, setModalVisible] = useState(false);
