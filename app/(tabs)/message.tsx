@@ -190,9 +190,18 @@ export default function MessagesScreen() {
     }
   };
 
-  const containerStyle = [styles.container, { paddingTop: 16 + insets.top, paddingBottom: 16 + insets.bottom }];
-  const chatContainerStyle = [styles.chatContainer, { paddingTop: 12 + insets.top }];
-  const composerStyle = [styles.composer, { paddingBottom: 12 + insets.bottom }];
+  const containerStyle = [
+    styles.container,
+    { paddingTop: 16 + insets.top, paddingBottom: 16 + insets.bottom },
+  ];
+  const chatContainerStyle = [
+    styles.chatContainer,
+    { paddingTop: 12 + insets.top },
+  ];
+  const composerStyle = [
+    styles.composer,
+    { paddingBottom: 12 + insets.bottom },
+  ];
 
   return (
     <ThemedView style={containerStyle}>
