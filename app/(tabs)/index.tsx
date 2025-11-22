@@ -108,23 +108,23 @@ function TimelineCard({
             </>
           )}
         </View>
-      <ThemedText type="subtitle">{item.title ?? "No title"}</ThemedText>
+        <ThemedText type="subtitle">{item.title ?? "No title"}</ThemedText>
         <ThemedText numberOfLines={5} ellipsizeMode="tail">
           {item.description ?? ""}
         </ThemedText>
-      {item.attachments && item.attachments.length > 0 && (
-        <Image
-          source={{ uri: item.attachments[0] }}
-          style={{
-            width: "100%",
-            height: 200,
-            borderRadius: 8,
-            marginTop: 12,
-          }}
-          resizeMode="cover"
-        />
-      )}
-    </View>
+        {item.attachments && item.attachments.length > 0 && (
+          <Image
+            source={{ uri: item.attachments[0] }}
+            style={{
+              width: "100%",
+              height: 200,
+              borderRadius: 8,
+              marginTop: 12,
+            }}
+            resizeMode="cover"
+          />
+        )}
+      </View>
     </Pressable>
   );
 }
