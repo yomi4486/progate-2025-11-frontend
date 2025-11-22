@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Alert, Button, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Button, StyleSheet, Text, TextInput } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -67,7 +67,7 @@ export default function LoginScreen() {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    router.replace("/login");
+    router.replace({ pathname: "/login" });
   };
 
   return (
@@ -94,8 +94,6 @@ export default function LoginScreen() {
         onPress={handleSignIn}
         disabled={loading || !email || !password}
       />
-      <View style={{ height: 12 }} />
-      <Button title="サインアウト(デバッグ)" onPress={handleSignOut} />
     </ThemedView>
   );
 }
