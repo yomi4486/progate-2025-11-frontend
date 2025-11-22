@@ -27,8 +27,8 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>Prod Disco</string>
-          <string>com.izanagi.progate202511frontend</string>
+          <string>progate202511frontend</string>
+          <string>com.anonymous.progate202511frontend</string>
         </array>
       </dict>
     </array>
