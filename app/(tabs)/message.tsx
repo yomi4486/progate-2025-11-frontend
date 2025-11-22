@@ -1,3 +1,4 @@
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Image } from "expo-image";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -13,9 +14,9 @@ import {
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Database } from "@/lib/database.types";
 import { supabase } from "@/lib/supabase";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type UserRow = Database["public"]["Tables"]["users"]["Row"];
 type MessageRow = Database["public"]["Tables"]["messages"]["Row"];
@@ -199,6 +200,7 @@ export default function MessagesScreen() {
       <ThemedText type="title" style={styles.title}>
         投稿にいいねしてくれた人
       </ThemedText>
+      <ThemedText style={{color: "#666", marginBottom: 12, fontSize: 14}}>自分のアイデアや趣味に興味を持ってくれた人たちと話をしてみましょう！</ThemedText>
 
       {loading ? (
         <ActivityIndicator />
@@ -210,12 +212,15 @@ export default function MessagesScreen() {
           keyExtractor={(i) => i.id}
           renderItem={({ item }) => (
             <TouchableOpacity style={styles.row} onPress={() => openChat(item)}>
-              {item.icon_url ? (
-                <Image source={{ uri: item.icon_url }} style={styles.avatar} />
-              ) : (
-                <View style={styles.avatarPlaceholder} />
-              )}
-              <ThemedText style={styles.name}>{item.name}</ThemedText>
+              <View style={styles.rowLeft}>
+                {item.icon_url ? (
+                  <Image source={{ uri: item.icon_url }} style={styles.avatar} />
+                ) : (
+                  <View style={styles.avatarPlaceholder} />
+                )}
+                <ThemedText style={styles.name}>{item.name}</ThemedText>
+              </View>
+              <MaterialIcons name="chevron-right" size={24} color="#666" />
             </TouchableOpacity>
           )}
         />
@@ -275,7 +280,8 @@ export default function MessagesScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16 },
   title: { marginBottom: 12 },
-  row: { flexDirection: "row", alignItems: "center", paddingVertical: 10 },
+  row: { flexDirection: "row", alignItems: "center", paddingVertical: 10, justifyContent: "space-between" },
+  rowLeft: { flexDirection: "row", alignItems: "center" },
   avatar: { width: 44, height: 44, borderRadius: 22, marginRight: 12 },
   avatarPlaceholder: {
     width: 44,
