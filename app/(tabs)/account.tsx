@@ -24,7 +24,7 @@ export default function AccountScreen() {
     id?: string | null;
   } | null>(null);
   const [posts, setPosts] = useState<TimelineItem[]>([]);
-  // 追加: いいねした投稿を管理するstate
+  // 20251122追加: いいねした投稿を管理するstate
   const [likedPosts, setLikedPosts] = useState<TimelineItem[]>([]);
 
   useEffect(() => {
@@ -58,8 +58,7 @@ export default function AccountScreen() {
           .order("created_at", { ascending: false });
         if (timelineError) throw timelineError;
         
-        // 3. いいねした投稿を取得 (ここを追加)
-        // likesテーブルを経由して、timelinesの情報を取得する
+        // 3. いいねした投稿を取得
         const { data: likedData, error: likedError } = await supabase
           .from("likes")
           .select(`
@@ -77,8 +76,7 @@ export default function AccountScreen() {
 
         setPosts((timelineData as unknown as TimelineItem[]) || []);
         
-        // Supabaseからの返り値は { timelines: {...} } の配列になっているので、
-        // timelinesの中身だけを取り出して配列にする
+        // Supabaseからの返り値は { timelines: {...} } の配列になっているので,imelinesの中身だけを取り出して配列にする
         const formattedLikedPosts = likedData
           ?.map((item) => item.timelines)
           .filter((t) => t !== null) as unknown as TimelineItem[];
@@ -99,7 +97,6 @@ export default function AccountScreen() {
     };
   }, [router]);
 
-  // 投稿リストを表示するコンポーネント（共通化）
   const renderPostList = (items: TimelineItem[], emptyText: string) => {
     if (items.length === 0) {
       return <ThemedText style={{ marginTop: 8 }}>{emptyText}</ThemedText>;
