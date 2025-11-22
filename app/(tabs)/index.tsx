@@ -31,6 +31,64 @@ type SwipeHandlers = {
   onOpen?: (item: TimelineItem) => void;
 };
 
+function RemoteSizedImage({
+  uri,
+  containerWidth,
+  maxHeight = null,
+  contain = false,
+  useCardPadding = true,
+}: {
+  uri: string;
+  containerWidth: number;
+  maxHeight?: number | null;
+  contain?: boolean;
+  useCardPadding?: boolean;
+}) {
+  const [height, setHeight] = useState<number | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    Image.getSize(
+      uri,
+      (w, h) => {
+        if (!mounted) return;
+        const calculated = Math.round((containerWidth * h) / w);
+        setHeight(maxHeight ? Math.min(calculated, maxHeight) : calculated);
+      },
+      () => {
+        if (!mounted) return;
+        setHeight(Math.round((containerWidth * 9) / 16));
+      },
+    );
+    return () => {
+      mounted = false;
+    };
+  }, [uri, containerWidth, maxHeight]);
+
+  if (height == null) return null;
+
+  const flattened = StyleSheet.flatten(cardStyles.card) as any;
+  const CARD_PADDING =
+    typeof flattened?.padding === "number" ? flattened.padding : 16;
+  const imageWidth = useCardPadding
+    ? Math.max(0, containerWidth - CARD_PADDING * 2)
+    : containerWidth;
+
+  return (
+    <Image
+      source={{ uri }}
+      style={{
+        width: imageWidth,
+        height,
+        borderRadius: 8,
+        marginTop: 12,
+        alignSelf: "center",
+      }}
+      resizeMode={contain ? "contain" : "cover"}
+    />
+  );
+}
+
 function TimelineCard({
   item,
   onOpen,
@@ -42,9 +100,6 @@ function TimelineCard({
   const cardHeight = Math.round(windowHeight * 0.6);
   const maxImageHeight = Math.round(windowHeight * 0.35);
   const [containerWidth, setContainerWidth] = useState<number | null>(null);
-  const [calcedImageHeight, setCalcedImageHeight] = useState<number | null>(
-    null,
-  );
   const [author, setAuthor] = useState<{
     name?: string | null;
     icon_url?: string | null;
@@ -123,70 +178,23 @@ function TimelineCard({
             </>
           )}
         </View>
+
         <ThemedText type="subtitle">{item.title ?? "No title"}</ThemedText>
         <ThemedText numberOfLines={5} ellipsizeMode="tail">
           {item.description ?? ""}
         </ThemedText>
-        {item.attachments && item.attachments.length > 0 && (
-          <>
-            {containerWidth == null ? null : (
-              <RemoteSizedImage
-                uri={item.attachments[0]}
-                containerWidth={containerWidth}
-                maxHeight={maxImageHeight}
-              />
-            )}
-          </>
-        )}
+
+        {item.attachments &&
+          item.attachments.length > 0 &&
+          containerWidth != null && (
+            <RemoteSizedImage
+              uri={item.attachments[0]}
+              containerWidth={containerWidth}
+              maxHeight={maxImageHeight}
+            />
+          )}
       </View>
     </Pressable>
-  );
-}
-
-function RemoteSizedImage({
-  uri,
-  containerWidth,
-  maxHeight,
-}: {
-  uri: string;
-  containerWidth: number;
-  maxHeight: number;
-}) {
-  const [height, setHeight] = useState<number | null>(null);
-
-  useEffect(() => {
-    let mounted = true;
-    Image.getSize(
-      uri,
-      (w, h) => {
-        if (!mounted) return;
-        const calculated = Math.round((containerWidth * h) / w);
-        setHeight(maxHeight ? Math.min(calculated, maxHeight) : calculated);
-      },
-      () => {
-        if (!mounted) return;
-        // サイズの取得に失敗した時，既定の高さに代用する
-        setHeight(Math.round((containerWidth * 9) / 16));
-      },
-    );
-    return () => {
-      mounted = false;
-    };
-  }, [uri, containerWidth, maxHeight]);
-
-  if (height == null) return null;
-
-  const flattened = StyleSheet.flatten(cardStyles.card) as any;
-  const CARD_PADDING =
-    typeof flattened?.padding === "number" ? flattened.padding : 16;
-  const imageWidth = Math.max(0, containerWidth - CARD_PADDING * 2);
-
-  return (
-    <Image
-      source={{ uri }}
-      style={{ width: imageWidth, height, borderRadius: 8, marginTop: 12 }}
-      resizeMode="cover"
-    />
   );
 }
 
@@ -198,9 +206,9 @@ function TimelineSwiper({
 }: { items: TimelineItem[] } & SwipeHandlers) {
   const { height: windowHeight } = useWindowDimensions();
   const containerMinHeight = Math.round(windowHeight * 0.8);
-  const [stack, setStack] = React.useState<TimelineItem[]>(items);
+  const [stack, setStack] = useState<TimelineItem[]>(items);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setStack(items);
   }, [items]);
 
@@ -226,7 +234,6 @@ function TimelineSwiper({
             style={[swipeStyles.cardWrapper, { zIndex, top: offsetTop }]}
           >
             <TinderCard
-              // 20251121_追加_preventSwipeを追加することで、上下スワイプを無効化し、左右の検知精度を上げた
               preventSwipe={["up", "down"]}
               onSwipe={(dir: string) => onSwipe?.(item.id, dir)}
               onCardLeftScreen={() => handleCardLeftInternal(item.id)}
@@ -243,11 +250,11 @@ function TimelineSwiper({
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { height: windowHeight } = useWindowDimensions();
   const [items, setItems] = useState<TimelineItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [newPostBanner, setNewPostBanner] = useState<string | null>(null);
 
-  // 20251121_修正_スワイプ済みのデータを除外して取得する
   const fetchTimelines = useCallback(async () => {
     setLoading(true);
     try {
@@ -256,7 +263,6 @@ export default function HomeScreen() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        // ログインしていない場合（通常はリダイレクトされるが念の為）
         const { data, error } = await supabase
           .from("timelines")
           .select("*")
@@ -266,30 +272,22 @@ export default function HomeScreen() {
         return;
       }
 
-      // 自分が評価済みのIDリストを取得
       const { data: myLikes, error: likesError } = await supabase
         .from("likes")
         .select("timeline_id")
         .eq("user_id", user.id);
-
       if (likesError) throw likesError;
-
       const swipedIds = myLikes?.map((l) => l.timeline_id) || [];
 
-      // timelinesを取得（評価済みを除外）
       let query = supabase
         .from("timelines")
         .select("*")
         .order("created_at", { ascending: false });
-
-      if (swipedIds.length > 0) {
-        // not('id', 'in', [配列]) で除外
+      if (swipedIds.length > 0)
         query = query.not("id", "in", `(${swipedIds.join(",")})`);
-      }
 
       const { data, error } = await query;
       if (error) throw error;
-
       setItems((data as unknown as TimelineItem[]) || []);
     } catch (err) {
       console.error("Failed to fetch timelines", err);
@@ -303,7 +301,6 @@ export default function HomeScreen() {
   }, [fetchTimelines]);
 
   useEffect(() => {
-    // Subscribe to realtime inserts on timelines
     const channel = supabase
       .channel("public:timelines")
       .on(
@@ -312,8 +309,6 @@ export default function HomeScreen() {
         (payload) => {
           try {
             const newRow = payload.new as TimelineItem;
-            // リアルタイム更新時は，自分がスワイプしたかどうかのチェックが難しいので
-            // とりあえず表示させる（または厳密にやるならここでlikesをチェックする）
             setItems((prev) => [newRow, ...prev]);
             setNewPostBanner("新しい投稿があります！");
             setTimeout(() => setNewPostBanner(null), 5000);
@@ -333,32 +328,19 @@ export default function HomeScreen() {
     };
   }, []);
 
-  // 20251121_修正_スワイプ時にDBへ保存する処理
   const handleSwipe = async (id: string, direction: string) => {
     console.log("swiped detected:", id, direction);
-
-    // directionは 'left' | 'right' | 'up' | 'down' が来る
-    // 右なら like, それ以外（左）なら skip とする
     const type = direction === "right" ? "like" : "skip";
-
     try {
       const {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) return;
-
-      // likesテーブルに保存
-      const { error } = await supabase.from("likes").insert({
-        user_id: user.id,
-        timeline_id: id,
-        type: type,
-      });
-
+      const { error } = await supabase
+        .from("likes")
+        .insert({ user_id: user.id, timeline_id: id, type });
       if (error) {
-        // 重複エラー(23505)などは無視してよい
-        if (error.code !== "23505") {
-          console.error("スワイプ保存エラー", error);
-        }
+        if (error.code !== "23505") console.error("スワイプ保存エラー", error);
       } else {
         console.log(`Saved ${type} for post ${id}`);
       }
@@ -368,15 +350,19 @@ export default function HomeScreen() {
   };
 
   const handleCardLeft = (id: string) => {
-    // ここは画面から消えた後の処理。
-    // 今回は handleSwipe でDB保存を行っているので、ここではログ出しのみでOK
     console.log("card left screen completely", id);
   };
 
   const [modalVisible, setModalVisible] = useState(false);
   const [postModalVisible, setPostModalVisible] = useState(false);
   const [selectedItem, setSelectedItem] = useState<TimelineItem | null>(null);
+  const [modalInnerWidth, setModalInnerWidth] = useState<number | null>(null);
   const [checkingProfile, setCheckingProfile] = useState(false);
+
+  const _flattenedCard = StyleSheet.flatten(cardStyles.card) as any;
+  const CARD_PADDING =
+    typeof _flattenedCard?.padding === "number" ? _flattenedCard.padding : 16;
+  const EXTRA_PADDING = 16;
 
   const openCreate = async () => {
     setCheckingProfile(true);
@@ -385,12 +371,9 @@ export default function HomeScreen() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) {
-        // not authenticated -> go to login
         router.push("/login");
         return;
       }
-
-      // check if profile exists in `users` table
       const { data, error } = await supabase
         .from("users")
         .select("id")
@@ -404,15 +387,11 @@ export default function HomeScreen() {
           "投稿にはプロフィールが必要です。プロフィールを設定しますか？",
           [
             { text: "いいえ", style: "cancel" },
-            {
-              text: "設定する",
-              onPress: () => router.push("/settings"),
-            },
+            { text: "設定する", onPress: () => router.push("/settings") },
           ],
         );
         return;
       }
-
       setModalVisible(true);
     } catch (e: unknown) {
       if (e instanceof Error) {
@@ -429,7 +408,6 @@ export default function HomeScreen() {
     setSelectedItem(item);
     setPostModalVisible(true);
   };
-
   const closePost = () => {
     setSelectedItem(null);
     setPostModalVisible(false);
@@ -442,18 +420,32 @@ export default function HomeScreen() {
   ) => {
     console.log("posting", { title, description });
     const userId = (await supabase.auth.getUser()).data.user?.id || "";
-    console.log(userId);
-    const res = await supabase.from("timelines").insert({
-      title,
-      description,
-      author: userId,
-      attachments: imageUrls,
-    });
+    const res = await supabase
+      .from("timelines")
+      .insert({ title, description, author: userId, attachments: imageUrls });
     console.log("insert result", res);
   };
 
   return (
     <ThemedView style={{ flex: 1 }}>
+      {checkingProfile && (
+        <View
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            top: 0,
+            bottom: 0,
+            zIndex: 2000,
+            backgroundColor: "rgba(0,0,0,0.45)",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <ActivityIndicator size="large" color="#fff" />
+        </View>
+      )}
+
       {newPostBanner ? (
         <ThemedView
           style={{
@@ -477,6 +469,7 @@ export default function HomeScreen() {
           </ThemedView>
         </ThemedView>
       ) : null}
+
       <ParallaxScrollView
         scrollEnabled={false}
         headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
@@ -544,7 +537,7 @@ export default function HomeScreen() {
             flex: 1,
             justifyContent: "center",
             alignItems: "center",
-            padding: 16,
+            padding: CARD_PADDING + EXTRA_PADDING,
           }}
         >
           <ThemedView
@@ -552,7 +545,7 @@ export default function HomeScreen() {
               width: "100%",
               maxHeight: "90%",
               borderRadius: 8,
-              padding: 16,
+              padding: CARD_PADDING + EXTRA_PADDING,
               backgroundColor: "#fff",
             }}
           >
@@ -572,21 +565,26 @@ export default function HomeScreen() {
               </Pressable>
             </View>
             <ScrollView>
-              {selectedItem?.attachments &&
-                selectedItem.attachments.length > 0 && (
-                  <Image
-                    source={{ uri: selectedItem.attachments[0] }}
-                    style={{
-                      width: "100%",
-                      aspectRatio: 16 / 9,
-                      maxHeight: 400,
-                      borderRadius: 8,
-                      marginBottom: 12,
-                    }}
-                    resizeMode="cover"
-                  />
-                )}
-              <ThemedText>{selectedItem?.description ?? ""}</ThemedText>
+              <View
+                onLayout={(e) => {
+                  const w = e.nativeEvent.layout.width;
+                  if (!modalInnerWidth) setModalInnerWidth(w);
+                }}
+              >
+                {selectedItem?.attachments &&
+                  selectedItem.attachments.length > 0 &&
+                  modalInnerWidth != null && (
+                    <RemoteSizedImage
+                      uri={selectedItem.attachments[0]}
+                      containerWidth={modalInnerWidth}
+                      maxHeight={Math.round(windowHeight * 0.8)}
+                      contain={true}
+                      useCardPadding={false}
+                    />
+                  )}
+
+                <ThemedText>{selectedItem?.description ?? ""}</ThemedText>
+              </View>
             </ScrollView>
           </ThemedView>
         </ThemedView>
