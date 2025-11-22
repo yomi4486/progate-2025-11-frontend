@@ -20,6 +20,11 @@ export default function RootLayout() {
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        {/* Explicitly set title for settings screen and back button label */}
+        <Stack.Screen
+          name="settings/index"
+          options={{ title: "設定", headerBackTitle: "ホーム" }}
+        />
         <Stack.Screen
           name="modal"
           options={{ presentation: "modal", title: "Modal" }}
