@@ -10,20 +10,16 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { supabase } from "@/lib/supabase";
 import { Database } from "@/lib/database.types";
-
 type UserRow = Database["public"]["Tables"]["users"]["Row"];
 type MessageRow = Database["public"]["Tables"]["messages"]["Row"];
-
 export default function MessagesScreen() {
   const [loading, setLoading] = useState(true);
   const [likers, setLikers] = useState<UserRow[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-
   const [chatOpen, setChatOpen] = useState(false);
   const [otherUser, setOtherUser] = useState<UserRow | null>(null);
   const [messages, setMessages] = useState<MessageRow[]>([]);
@@ -31,10 +27,8 @@ export default function MessagesScreen() {
   const [newMessage, setNewMessage] = useState("");
   const channelRef = useRef<any>(null);
   const listRef = useRef<FlatList<MessageRow> | null>(null);
-
   useEffect(() => {
     let mounted = true;
-
     (async () => {
       setLoading(true);
       try {
@@ -43,25 +37,21 @@ export default function MessagesScreen() {
         if (!me) return;
         if (!mounted) return;
         setCurrentUserId(me.id);
-
         // 1) get timelines authored by me
         const { data: timelines } = await supabase
           .from("timelines")
           .select("id")
           .eq("author", me.id);
-
         const timelineIds = (timelines || []).map((t: any) => t.id);
         if (timelineIds.length === 0) {
           setLikers([]);
           return;
         }
-
         // 2) get likes for those timelines
         const { data: likes } = await supabase
           .from("likes")
           .select("user_id")
           .in("timeline_id", timelineIds);
-
         const userIds = Array.from(
           new Set((likes || []).map((l: any) => l.user_id)),
         );
@@ -69,13 +59,11 @@ export default function MessagesScreen() {
           setLikers([]);
           return;
         }
-
         // 3) fetch users info
         const { data: users } = await supabase
           .from("users")
           .select("id, name, icon_url")
           .in("id", userIds);
-
         setLikers((users as UserRow[]) || []);
       } catch (e) {
         console.error("Failed to load likers", e);
@@ -83,12 +71,10 @@ export default function MessagesScreen() {
         if (mounted) setLoading(false);
       }
     })();
-
     return () => {
       mounted = false;
     };
   }, []);
-
   // subscribe to realtime messages (global) and filter in client
   useEffect(() => {
     const channel = supabase
@@ -113,23 +99,18 @@ export default function MessagesScreen() {
         },
       )
       .subscribe();
-
     channelRef.current = channel;
-
     return () => {
       try {
         channel.unsubscribe();
-      } catch (_) {}
+      } catch (_) { }
     };
   }, [chatOpen, currentUserId, otherUser]);
-
   const openChat = async (user: UserRow) => {
     setOtherUser(user);
     setChatOpen(true);
     setMessages([]);
-
     if (!currentUserId) return;
-
     try {
       const orFilter = `and(author.eq.${currentUserId},to_user.eq.${user.id}),and(author.eq.${user.id},to_user.eq.${currentUserId})`;
       const { data, error } = await supabase
@@ -137,12 +118,9 @@ export default function MessagesScreen() {
         .select("*")
         .or(orFilter)
         .order("created_at", { ascending: true });
-
       if (error) throw error;
-
       const rows = (data as MessageRow[]) || [];
       setMessages(rows);
-
       // scroll to bottom after a tick
       setTimeout(() => {
         try {
@@ -160,14 +138,12 @@ export default function MessagesScreen() {
       console.error("Failed to load messages", e);
     }
   };
-
   const closeChat = () => {
     setChatOpen(false);
     setOtherUser(null);
     setMessages([]);
     setNewMessage("");
   };
-
   const sendMessage = async () => {
     if (!currentUserId || !otherUser || newMessage.trim() === "") return;
     setSending(true);
@@ -185,13 +161,11 @@ export default function MessagesScreen() {
       setSending(false);
     }
   };
-
   return (
     <ThemedView style={styles.container}>
       <ThemedText type="title" style={styles.title}>
         投稿にいいねしてくれた人
       </ThemedText>
-
       {loading ? (
         <ActivityIndicator />
       ) : likers.length === 0 ? (
@@ -212,7 +186,6 @@ export default function MessagesScreen() {
           )}
         />
       )}
-
       <Modal visible={chatOpen} animationType="slide">
         <ThemedView style={styles.chatContainer}>
           <View style={styles.chatHeader}>
@@ -222,7 +195,6 @@ export default function MessagesScreen() {
             <ThemedText type="title">{otherUser?.name}</ThemedText>
             <View style={{ width: 60 }} />
           </View>
-
           <FlatList
             ref={(r) => {
               listRef.current = r;
@@ -242,7 +214,6 @@ export default function MessagesScreen() {
             )}
             contentContainerStyle={{ padding: 12 }}
           />
-
           <View style={styles.composer}>
             <TextInput
               value={newMessage}
@@ -263,7 +234,6 @@ export default function MessagesScreen() {
     </ThemedView>
   );
 }
-
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16 },
   title: { marginBottom: 12 },
