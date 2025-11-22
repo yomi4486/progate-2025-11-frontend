@@ -12,6 +12,7 @@ BEGIN
 
 	-- Recreate the policy using a text comparison (auth.uid()::text) and
 	-- allow the object's owner_id to update as well (safer for overwrites).
+	/*
 	CREATE POLICY update_objects_by_owner_or_user_icons ON storage.objects
 		FOR UPDATE
 		USING (
@@ -32,4 +33,5 @@ BEGIN
 				)
 			)
 		);
+		*/
 END$$;
