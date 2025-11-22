@@ -250,7 +250,10 @@ export default function MessagesScreen() {
                 </ThemedText>
               </View>
             )}
-            contentContainerStyle={{ padding: 12, paddingBottom: 20 + insets.bottom }}
+            contentContainerStyle={{
+              padding: 12,
+              paddingBottom: 20 + insets.bottom,
+            }}
           />
           <View style={composerStyle}>
             <TextInput
