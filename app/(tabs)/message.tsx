@@ -290,7 +290,9 @@ export default function MessagesScreen() {
               {sending ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <ThemedText style={{ color: "#fff" }}><MaterialIcons name="chevron-right" size={24} color="#fff" /></ThemedText>
+                <ThemedText style={{ color: "#fff" }}>
+                  <MaterialIcons name="chevron-right" size={24} color="#fff" />
+                </ThemedText>
               )}
             </Pressable>
           </View>
