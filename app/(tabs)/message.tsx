@@ -62,7 +62,9 @@ export default function MessagesScreen() {
           .select("user_id")
           .in("timeline_id", timelineIds);
 
-        const userIds = Array.from(new Set((likes || []).map((l: any) => l.user_id)));
+        const userIds = Array.from(
+          new Set((likes || []).map((l: any) => l.user_id)),
+        );
         if (userIds.length === 0) {
           setLikers([]);
           return;
@@ -101,8 +103,10 @@ export default function MessagesScreen() {
             chatOpen &&
             currentUserId &&
             otherUser &&
-            ((newRow.author === currentUserId && newRow.to_user === otherUser.id) ||
-              (newRow.author === otherUser.id && newRow.to_user === currentUserId))
+            ((newRow.author === currentUserId &&
+              newRow.to_user === otherUser.id) ||
+              (newRow.author === otherUser.id &&
+                newRow.to_user === currentUserId))
           ) {
             setMessages((prev) => [...prev, newRow]);
           }
@@ -143,7 +147,10 @@ export default function MessagesScreen() {
       setTimeout(() => {
         try {
           if (listRef.current && rows.length > 0) {
-            listRef.current.scrollToIndex({ index: rows.length - 1, animated: true });
+            listRef.current.scrollToIndex({
+              index: rows.length - 1,
+              animated: true,
+            });
           }
         } catch (e) {
           /* ignore scroll errors */
@@ -194,10 +201,7 @@ export default function MessagesScreen() {
           data={likers}
           keyExtractor={(i) => i.id}
           renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.row}
-              onPress={() => openChat(item)}
-            >
+            <TouchableOpacity style={styles.row} onPress={() => openChat(item)}>
               {item.icon_url ? (
                 <Image source={{ uri: item.icon_url }} style={styles.avatar} />
               ) : (
@@ -220,7 +224,9 @@ export default function MessagesScreen() {
           </View>
 
           <FlatList
-            ref={(r) => { listRef.current = r }}
+            ref={(r) => {
+              listRef.current = r;
+            }}
             data={messages}
             keyExtractor={(m) => m.id}
             renderItem={({ item }) => (
@@ -263,13 +269,57 @@ const styles = StyleSheet.create({
   title: { marginBottom: 12 },
   row: { flexDirection: "row", alignItems: "center", paddingVertical: 10 },
   avatar: { width: 44, height: 44, borderRadius: 22, marginRight: 12 },
-  avatarPlaceholder: { width: 44, height: 44, borderRadius: 22, backgroundColor: "#ddd", marginRight: 12 },
+  avatarPlaceholder: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#ddd",
+    marginRight: 12,
+  },
   name: { fontSize: 16 },
   chatContainer: { flex: 1, paddingTop: 40 },
-  chatHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 12, paddingBottom: 8 },
-  messageRowLeft: { alignSelf: "flex-start", backgroundColor: "#eee", padding: 8, borderRadius: 8, marginBottom: 6 },
-  messageRowRight: { alignSelf: "flex-end", backgroundColor: "#4f93ff", padding: 8, borderRadius: 8, marginBottom: 6 },
-  composer: { flexDirection: "row", padding: 12, borderTopWidth: 1, borderColor: "#ddd" },
-  input: { flex: 1, padding: 8, backgroundColor: "#fff", borderRadius: 8, marginRight: 8, borderWidth: 1, borderColor: "#ddd" },
-  sendButton: { backgroundColor: "#2563eb", paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8, justifyContent: "center", alignItems: "center" },
+  chatHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingBottom: 8,
+  },
+  messageRowLeft: {
+    alignSelf: "flex-start",
+    backgroundColor: "#eee",
+    padding: 8,
+    borderRadius: 8,
+    marginBottom: 6,
+  },
+  messageRowRight: {
+    alignSelf: "flex-end",
+    backgroundColor: "#4f93ff",
+    padding: 8,
+    borderRadius: 8,
+    marginBottom: 6,
+  },
+  composer: {
+    flexDirection: "row",
+    padding: 12,
+    borderTopWidth: 1,
+    borderColor: "#ddd",
+  },
+  input: {
+    flex: 1,
+    padding: 8,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
+  sendButton: {
+    backgroundColor: "#2563eb",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+  },
 });

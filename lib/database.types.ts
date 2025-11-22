@@ -64,50 +64,50 @@ export type Database = {
             referencedRelation: "timelines";
             referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       messages: {
         Row: {
-          attachments: string[] | null
-          author: string
-          content: string
-          created_at: string
-          id: string
-          to_user: string
-        }
+          attachments: string[] | null;
+          author: string;
+          content: string;
+          created_at: string;
+          id: string;
+          to_user: string;
+        };
         Insert: {
-          attachments?: string[] | null
-          author: string
-          content: string
-          created_at?: string
-          id?: string
-          to_user: string
-        }
+          attachments?: string[] | null;
+          author: string;
+          content: string;
+          created_at?: string;
+          id?: string;
+          to_user: string;
+        };
         Update: {
-          attachments?: string[] | null
-          author?: string
-          content?: string
-          created_at?: string
-          id?: string
-          to_user?: string
-        }
+          attachments?: string[] | null;
+          author?: string;
+          content?: string;
+          created_at?: string;
+          id?: string;
+          to_user?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "messages_author_fkey"
-            columns: ["author"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
+            foreignKeyName: "messages_author_fkey";
+            columns: ["author"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "messages_to_user_fkey"
-            columns: ["to_user"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
+            foreignKeyName: "messages_to_user_fkey";
+            columns: ["to_user"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       tags: {
         Row: {
           created_at: string;
