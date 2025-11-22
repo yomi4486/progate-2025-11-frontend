@@ -416,10 +416,12 @@ export default function HomeScreen() {
           ]}
         >
           <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <ThemedText type="title" style={{ marginRight: 8 }}>タイムライン</ThemedText>
+            <ThemedText type="title" style={{ marginRight: 8 }}>
+              タイムライン
+            </ThemedText>
 
             {/* リロードアイコン */}
-            <Pressable onPress={fetchTimelines} >
+            <Pressable onPress={fetchTimelines}>
               <MaterialIcons name="refresh" size={24} color="#666" />
             </Pressable>
           </View>
