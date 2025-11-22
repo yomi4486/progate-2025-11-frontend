@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useRef } from "react";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Image } from "expo-image";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -12,11 +13,14 @@ import {
 } from "react-native";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { supabase } from "@/lib/supabase";
 import { Database } from "@/lib/database.types";
+import { supabase } from "@/lib/supabase";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 type UserRow = Database["public"]["Tables"]["users"]["Row"];
 type MessageRow = Database["public"]["Tables"]["messages"]["Row"];
 export default function MessagesScreen() {
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [likers, setLikers] = useState<UserRow[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -52,9 +56,12 @@ export default function MessagesScreen() {
           .from("likes")
           .select("user_id")
           .in("timeline_id", timelineIds);
-        const userIds = Array.from(
+
+        let userIds = Array.from(
           new Set((likes || []).map((l: any) => l.user_id)),
         );
+        // exclude current user from likers list
+        userIds = userIds.filter((id: string) => id !== me.id);
         if (userIds.length === 0) {
           setLikers([]);
           return;
@@ -161,11 +168,30 @@ export default function MessagesScreen() {
       setSending(false);
     }
   };
+
+  const containerStyle = [
+    styles.container,
+    { paddingTop: 16 + insets.top, paddingBottom: 16 + insets.bottom },
+  ];
+  const chatContainerStyle = [
+    styles.chatContainer,
+    { paddingTop: 12 + insets.top },
+  ];
+  const composerStyle = [
+    styles.composer,
+    { paddingBottom: 12 + insets.bottom },
+  ];
+
   return (
-    <ThemedView style={styles.container}>
+    <ThemedView style={containerStyle}>
       <ThemedText type="title" style={styles.title}>
         投稿にいいねしてくれた人
       </ThemedText>
+
+      <ThemedText style={{ color: "#666", marginBottom: 12, fontSize: 14 }}>
+        自分のアイデアや趣味に興味を持ってくれた人たちと話をしてみましょう！
+      </ThemedText>
+
       {loading ? (
         <ActivityIndicator />
       ) : likers.length === 0 ? (
@@ -176,18 +202,24 @@ export default function MessagesScreen() {
           keyExtractor={(i) => i.id}
           renderItem={({ item }) => (
             <TouchableOpacity style={styles.row} onPress={() => openChat(item)}>
-              {item.icon_url ? (
-                <Image source={{ uri: item.icon_url }} style={styles.avatar} />
-              ) : (
-                <View style={styles.avatarPlaceholder} />
-              )}
-              <ThemedText style={styles.name}>{item.name}</ThemedText>
+              <View style={styles.rowLeft}>
+                {item.icon_url ? (
+                  <Image
+                    source={{ uri: item.icon_url }}
+                    style={styles.avatar}
+                  />
+                ) : (
+                  <View style={styles.avatarPlaceholder} />
+                )}
+                <ThemedText style={styles.name}>{item.name}</ThemedText>
+              </View>
+              <MaterialIcons name="chevron-right" size={24} color="#666" />
             </TouchableOpacity>
           )}
         />
       )}
       <Modal visible={chatOpen} animationType="slide">
-        <ThemedView style={styles.chatContainer}>
+        <ThemedView style={chatContainerStyle}>
           <View style={styles.chatHeader}>
             <Pressable onPress={closeChat}>
               <ThemedText>閉じる</ThemedText>
@@ -215,6 +247,7 @@ export default function MessagesScreen() {
             contentContainerStyle={{ padding: 12 }}
           />
           <View style={styles.composer}>
+
             <TextInput
               value={newMessage}
               onChangeText={setNewMessage}
@@ -237,7 +270,13 @@ export default function MessagesScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16 },
   title: { marginBottom: 12 },
-  row: { flexDirection: "row", alignItems: "center", paddingVertical: 10 },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    justifyContent: "space-between",
+  },
+  rowLeft: { flexDirection: "row", alignItems: "center" },
   avatar: { width: 44, height: 44, borderRadius: 22, marginRight: 12 },
   avatarPlaceholder: {
     width: 44,

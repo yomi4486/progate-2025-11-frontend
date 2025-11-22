@@ -5,8 +5,10 @@
   "scripts": {
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo start --android",
+    "native_android": "expo run:android",
+    "native_ios": "expo run:ios",
     "ios": "expo start --ios",
+    "android": "expo start --android",
     "web": "expo start --web",
     "lint": "expo lint"
   },
