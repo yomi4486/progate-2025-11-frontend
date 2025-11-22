@@ -1,6 +1,6 @@
 import { Image } from "expo-image";
-import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, Button, View } from "react-native";
+import React, { useCallback, useState } from "react"; // 20251122追加_useCallbackを追加、useEffectを削除
+import { ActivityIndicator, Button, View } from "react-native";
 import { styles } from "./account.css";
 
 import ParallaxScrollView from "@/components/parallax-scroll-view";
@@ -10,7 +10,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Fonts } from "@/constants/theme";
 import { Database } from "@/lib/database.types";
 import { supabase } from "@/lib/supabase";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router"; // 20251122追加_useFocusEffectを追加
 
 type TimelineItem = Database["public"]["Tables"]["timelines"]["Row"];
 
@@ -27,75 +27,95 @@ export default function AccountScreen() {
   // 20251122追加: いいねした投稿を管理するstate
   const [likedPosts, setLikedPosts] = useState<TimelineItem[]>([]);
 
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      setLoading(true);
-      try {
-        const { data: userData } = await supabase.auth.getUser();
-        const user = userData.user;
-        if (!user) {
-          router.replace("/login");
-          return;
-        }
+  // 20251122追加: useEffect を useFocusEffect に変更
+  useFocusEffect(
+    useCallback(() => {
+      let mounted = true;
 
-        // 1. プロフィールの取得
-        const { data: profileData, error: profileError } = await supabase
-          .from("users")
-          .select("id,name,bio,icon_url")
-          .eq("id", user.id)
-          .single();
-        if (profileError && profileError.code !== "PGRST116")
-          throw profileError;
-        if (!mounted) return;
-        setProfile(profileData ?? { id: user.id });
+      const loadData = async () => {
+        setLoading(true); 
+        try {
+          const { data: userData } = await supabase.auth.getUser();
+          const user = userData.user;
+          if (!user) {
+            router.replace("/login");
+            return;
+          }
 
-        // 2. 自分の投稿を取得
-        const { data: timelineData, error: timelineError } = await supabase
-          .from("timelines")
-          .select("*")
-          .eq("author", user.id)
-          .order("created_at", { ascending: false });
-        if (timelineError) throw timelineError;
-        
-        // 3. いいねした投稿を取得
-        const { data: likedData, error: likedError } = await supabase
-          .from("likes")
-          .select(`
-            timelines (
-              *
-            )
-          `)
-          .eq("user_id", user.id)
-          .eq("type", "like") // 'like'のものだけ
-          .order("created_at", { ascending: false }); // 最近いいねした順
+          // 1. プロフィールの取得
+          const { data: profileData, error: profileError } = await supabase
+            .from("users")
+            .select("id,name,bio,icon_url")
+            .eq("id", user.id)
+            .single();
+            
+          // データがないエラー(PGRST116)は無視して続行
+          if (profileError && profileError.code !== "PGRST116") {
+            throw profileError;
+          }
 
-        if (likedError) throw likedError;
-
-        if (!mounted) return;
-
-        setPosts((timelineData as unknown as TimelineItem[]) || []);
-        
-        // Supabaseからの返り値は { timelines: {...} } の配列になっているので,imelinesの中身だけを取り出して配列にする
-        const formattedLikedPosts = likedData
-          ?.map((item) => item.timelines)
-          .filter((t) => t !== null) as unknown as TimelineItem[];
+          if (!mounted) return;
           
-        setLikedPosts(formattedLikedPosts || []);
+          // 20251122追加_画像更新が即座に反映されるようにキャッシュ対策を追加
+          const profileWithCacheBuster = profileData ? {
+            ...profileData,
+            icon_url: profileData.icon_url 
+              ? `${profileData.icon_url}?t=${new Date().getTime()}` 
+              : null
+          } : { id: user.id };
 
-      } catch (e: unknown) {
-        if (e instanceof Error) {
-          console.error("Account load failed", e);
-          Alert.alert("エラー", e.message || String(e));
+          setProfile(profileWithCacheBuster);
+
+          // 2. 自分の投稿を取得
+          const { data: timelineData, error: timelineError } = await supabase
+            .from("timelines")
+            .select("*")
+            .eq("author", user.id)
+            .order("created_at", { ascending: false });
+          if (timelineError) throw timelineError;
+          
+          // 3. いいねした投稿を取得
+          const { data: likedData, error: likedError } = await supabase
+            .from("likes")
+            .select(`
+              timelines (
+                *
+              )
+            `)
+            .eq("user_id", user.id)
+            .eq("type", "like")
+            .order("created_at", { ascending: false });
+
+          if (likedError) throw likedError;
+
+          if (!mounted) return;
+
+          setPosts((timelineData as unknown as TimelineItem[]) || []);
+          
+          const formattedLikedPosts = likedData
+            ?.map((item) => item.timelines)
+            .filter((t) => t !== null) as unknown as TimelineItem[];
+            
+          setLikedPosts(formattedLikedPosts || []);
+
+        } catch (e: unknown) {
+          if (e instanceof Error) {
+            console.error("Account load failed", e);
+            // ここでアラートを出すと、戻るたびにエラーが出る可能性があるのでログのみにするか検討
+            // Alert.alert("エラー", e.message || String(e));
+          }
+        } finally {
+          if (mounted) setLoading(false);
         }
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, [router]);
+      };
+
+      loadData();
+
+      return () => {
+        mounted = false;
+      };
+    }, []) // 依存配列は空でOK
+  );
 
   const renderPostList = (items: TimelineItem[], emptyText: string) => {
     if (items.length === 0) {
@@ -192,7 +212,7 @@ export default function AccountScreen() {
             {renderPostList(posts, "まだ投稿がありません。")}
           </View>
 
-          {/* いいねした投稿セクション (追加) */}
+          {/* いいねした投稿セクション */}
           <View>
             <ThemedText type="subtitle" style={{ marginBottom: 8 }}>
               いいねした投稿

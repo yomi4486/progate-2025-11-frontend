@@ -273,6 +273,8 @@ export default function HomeScreen() {
     console.log("card left screen completely", id);
   };
 
+
+
   const [modalVisible, setModalVisible] = useState(false);
   const [checkingProfile, setCheckingProfile] = useState(false);
 
