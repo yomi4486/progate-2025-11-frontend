@@ -97,7 +97,7 @@ export default function MessagesScreen() {
     await fetchLikers();
     setIsRefreshing(false);
   };
-      
+
   // subscribe to realtime messages (global) and filter in client
   useEffect(() => {
     const channel = supabase
