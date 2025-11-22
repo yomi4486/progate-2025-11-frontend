@@ -1,7 +1,7 @@
 import { Image } from "expo-image";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Button, View } from "react-native";
-import { styles } from "./account.css";
+import { styles } from "../(styles)/account.css";
 
 import ParallaxScrollView from "@/components/parallax-scroll-view";
 import { ThemedText } from "@/components/themed-text";

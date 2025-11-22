@@ -1,20 +1,22 @@
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { Database } from "@/lib/database.types";
+import { supabase } from "@/lib/supabase";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Image } from "expo-image";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
-import { Database } from "@/lib/database.types";
-import { supabase } from "@/lib/supabase";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type UserRow = Database["public"]["Tables"]["users"]["Row"];
@@ -101,7 +103,8 @@ export default function MessagesScreen() {
               (newRow.author === otherUser.id &&
                 newRow.to_user === currentUserId))
           ) {
-            setMessages((prev) => [...prev, newRow]);
+            // index2.tsx の実装に合わせ、新着メッセージを配列先頭に追加（inverted FlatList に対応）
+            setMessages((prev) => [newRow, ...prev]);
           }
         },
       )
@@ -124,23 +127,12 @@ export default function MessagesScreen() {
         .from("messages")
         .select("*")
         .or(orFilter)
-        .order("created_at", { ascending: true });
+        // index2.tsx の実装に合わせ、新しい順で取得（inverted FlatList に対応）
+        .order("created_at", { ascending: false });
       if (error) throw error;
       const rows = (data as MessageRow[]) || [];
       setMessages(rows);
-      // scroll to bottom after a tick
-      setTimeout(() => {
-        try {
-          if (listRef.current && rows.length > 0) {
-            listRef.current.scrollToIndex({
-              index: rows.length - 1,
-              animated: true,
-            });
-          }
-        } catch (e) {
-          /* ignore scroll errors */
-        }
-      }, 50);
+      // inverted FlatList を使うため手動スクロールは不要
     } catch (e) {
       console.error("Failed to load messages", e);
     }
@@ -179,7 +171,7 @@ export default function MessagesScreen() {
   ];
   const composerStyle = [
     styles.composer,
-    { paddingBottom: 12 + insets.bottom },
+    { paddingBottom: 25 + insets.bottom },
   ];
 
   return (
@@ -219,7 +211,12 @@ export default function MessagesScreen() {
         />
       )}
       <Modal visible={chatOpen} animationType="slide">
-        <ThemedView style={chatContainerStyle}>
+        {/* KeyboardAvoidingView を使い、キーボード表示時に入力欄が隠れないようにする */}
+        <KeyboardAvoidingView
+          style={chatContainerStyle}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 40 : 0}
+        >
           <View style={styles.chatHeader}>
             <Pressable onPress={closeChat}>
               <ThemedText>閉じる</ThemedText>
@@ -233,6 +230,9 @@ export default function MessagesScreen() {
             }}
             data={messages}
             keyExtractor={(m) => m.id}
+            // 最新メッセージを下に表示するためリストを反転
+            inverted={true}
+            keyboardDismissMode="on-drag"
             renderItem={({ item }) => (
               <View
                 style={
@@ -241,19 +241,32 @@ export default function MessagesScreen() {
                     : styles.messageRowLeft
                 }
               >
-                <ThemedText>{item.content}</ThemedText>
+                <ThemedText
+                  style={{
+                    color: item.author === currentUserId ? "#fff" : "#000",
+                  }}
+                >
+                  {item.content}
+                </ThemedText>
               </View>
             )}
-            contentContainerStyle={{ padding: 12 }}
+            contentContainerStyle={{
+              padding: 12,
+              paddingBottom: 20 + insets.bottom,
+            }}
           />
-          <View style={styles.composer}>
+          <View style={composerStyle}>
             <TextInput
               value={newMessage}
               onChangeText={setNewMessage}
               placeholder="メッセージを入力"
               style={styles.input}
             />
-            <Pressable onPress={sendMessage} style={styles.sendButton}>
+            <Pressable
+              onPress={sendMessage}
+              style={styles.sendButton}
+              disabled={sending}
+            >
               {sending ? (
                 <ActivityIndicator color="#fff" />
               ) : (
@@ -261,7 +274,7 @@ export default function MessagesScreen() {
               )}
             </Pressable>
           </View>
-        </ThemedView>
+        </KeyboardAvoidingView>
       </Modal>
     </ThemedView>
   );
