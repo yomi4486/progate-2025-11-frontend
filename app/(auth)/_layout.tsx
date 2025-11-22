@@ -16,5 +16,7 @@ export default function AuthLayout() {
   }, []);
 
   // Use a Stack layout for auth routes and disable header and gestures
-  return <Stack screenOptions={{ headerShown: false, gestureEnabled: false }} />;
+  return (
+    <Stack screenOptions={{ headerShown: false, gestureEnabled: false }} />
+  );
 }
