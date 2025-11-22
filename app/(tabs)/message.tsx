@@ -1,9 +1,17 @@
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { Database } from "@/lib/database.types";
+import { supabase } from "@/lib/supabase";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+
 import { Image } from "expo-image";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   RefreshControl,
   StyleSheet,
@@ -11,16 +19,12 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
-import { Database } from "@/lib/database.types";
-import { supabase } from "@/lib/supabase";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type UserRow = Database["public"]["Tables"]["users"]["Row"];
 type MessageRow = Database["public"]["Tables"]["messages"]["Row"];
-
 export default function MessagesScreen() {
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [likers, setLikers] = useState<UserRow[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -32,7 +36,6 @@ export default function MessagesScreen() {
   const [newMessage, setNewMessage] = useState("");
   const channelRef = useRef<any>(null);
   const listRef = useRef<FlatList<MessageRow> | null>(null);
-
   useEffect(() => {
     fetchLikers();
   }, []);
@@ -64,9 +67,11 @@ export default function MessagesScreen() {
         .select("user_id")
         .in("timeline_id", timelineIds);
 
-      const userIds = Array.from(
+      let userIds = Array.from(
         new Set((likes || []).map((l: any) => l.user_id)),
       );
+      // exclude current user from likers list
+      userIds = userIds.filter((id: string) => id !== me.id);
       if (userIds.length === 0) {
         setLikers([]);
         return;
@@ -92,7 +97,7 @@ export default function MessagesScreen() {
     await fetchLikers();
     setIsRefreshing(false);
   };
-
+      
   // subscribe to realtime messages (global) and filter in client
   useEffect(() => {
     const channel = supabase
@@ -112,66 +117,46 @@ export default function MessagesScreen() {
               (newRow.author === otherUser.id &&
                 newRow.to_user === currentUserId))
           ) {
-            setMessages((prev) => [...prev, newRow]);
+            // index2.tsx の実装に合わせ、新着メッセージを配列先頭に追加（inverted FlatList に対応）
+            setMessages((prev) => [newRow, ...prev]);
           }
         },
       )
       .subscribe();
-
     channelRef.current = channel;
-
     return () => {
       try {
         channel.unsubscribe();
       } catch (_) {}
     };
   }, [chatOpen, currentUserId, otherUser]);
-
   const openChat = async (user: UserRow) => {
     setOtherUser(user);
     setChatOpen(true);
     setMessages([]);
-
     if (!currentUserId) return;
-
     try {
       const orFilter = `and(author.eq.${currentUserId},to_user.eq.${user.id}),and(author.eq.${user.id},to_user.eq.${currentUserId})`;
       const { data, error } = await supabase
         .from("messages")
         .select("*")
         .or(orFilter)
-        .order("created_at", { ascending: true });
-
+        // index2.tsx の実装に合わせ、新しい順で取得（inverted FlatList に対応）
+        .order("created_at", { ascending: false });
       if (error) throw error;
-
       const rows = (data as MessageRow[]) || [];
       setMessages(rows);
-
-      // scroll to bottom after a tick
-      setTimeout(() => {
-        try {
-          if (listRef.current && rows.length > 0) {
-            listRef.current.scrollToIndex({
-              index: rows.length - 1,
-              animated: true,
-            });
-          }
-        } catch (e) {
-          /* ignore scroll errors */
-        }
-      }, 50);
+      // inverted FlatList を使うため手動スクロールは不要
     } catch (e) {
       console.error("Failed to load messages", e);
     }
   };
-
   const closeChat = () => {
     setChatOpen(false);
     setOtherUser(null);
     setMessages([]);
     setNewMessage("");
   };
-
   const sendMessage = async () => {
     if (!currentUserId || !otherUser || newMessage.trim() === "") return;
     setSending(true);
@@ -190,10 +175,27 @@ export default function MessagesScreen() {
     }
   };
 
+  const containerStyle = [
+    styles.container,
+    { paddingTop: 16 + insets.top, paddingBottom: 16 + insets.bottom },
+  ];
+  const chatContainerStyle = [
+    styles.chatContainer,
+    { paddingTop: 12 + insets.top },
+  ];
+  const composerStyle = [
+    styles.composer,
+    { paddingBottom: 25 + insets.bottom },
+  ];
+
   return (
-    <ThemedView style={styles.container}>
+    <ThemedView style={containerStyle}>
       <ThemedText type="title" style={styles.title}>
         投稿にいいねしてくれた人
+      </ThemedText>
+
+      <ThemedText style={{ color: "#666", marginBottom: 12, fontSize: 14 }}>
+        自分のアイデアや趣味に興味を持ってくれた人たちと話をしてみましょう！
       </ThemedText>
 
       {loading ? (
@@ -204,12 +206,18 @@ export default function MessagesScreen() {
           keyExtractor={(i) => i.id}
           renderItem={({ item }) => (
             <TouchableOpacity style={styles.row} onPress={() => openChat(item)}>
-              {item.icon_url ? (
-                <Image source={{ uri: item.icon_url }} style={styles.avatar} />
-              ) : (
-                <View style={styles.avatarPlaceholder} />
-              )}
-              <ThemedText style={styles.name}>{item.name}</ThemedText>
+              <View style={styles.rowLeft}>
+                {item.icon_url ? (
+                  <Image
+                    source={{ uri: item.icon_url }}
+                    style={styles.avatar}
+                  />
+                ) : (
+                  <View style={styles.avatarPlaceholder} />
+                )}
+                <ThemedText style={styles.name}>{item.name}</ThemedText>
+              </View>
+              <MaterialIcons name="chevron-right" size={24} color="#666" />
             </TouchableOpacity>
           )}
           ListEmptyComponent={
@@ -222,9 +230,13 @@ export default function MessagesScreen() {
           }
         />
       )}
-
       <Modal visible={chatOpen} animationType="slide">
-        <ThemedView style={styles.chatContainer}>
+        {/* KeyboardAvoidingView を使い、キーボード表示時に入力欄が隠れないようにする */}
+        <KeyboardAvoidingView
+          style={chatContainerStyle}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 40 : 0}
+        >
           <View style={styles.chatHeader}>
             <Pressable onPress={closeChat}>
               <ThemedText>閉じる</ThemedText>
@@ -232,13 +244,15 @@ export default function MessagesScreen() {
             <ThemedText type="title">{otherUser?.name}</ThemedText>
             <View style={{ width: 60 }} />
           </View>
-
           <FlatList
             ref={(r) => {
               listRef.current = r;
             }}
             data={messages}
             keyExtractor={(m) => m.id}
+            // 最新メッセージを下に表示するためリストを反転
+            inverted={true}
+            keyboardDismissMode="on-drag"
             renderItem={({ item }) => (
               <View
                 style={
@@ -247,20 +261,32 @@ export default function MessagesScreen() {
                     : styles.messageRowLeft
                 }
               >
-                <ThemedText>{item.content}</ThemedText>
+                <ThemedText
+                  style={{
+                    color: item.author === currentUserId ? "#fff" : "#000",
+                  }}
+                >
+                  {item.content}
+                </ThemedText>
               </View>
             )}
-            contentContainerStyle={{ padding: 12 }}
+            contentContainerStyle={{
+              padding: 12,
+              paddingBottom: 20 + insets.bottom,
+            }}
           />
-
-          <View style={styles.composer}>
+          <View style={composerStyle}>
             <TextInput
               value={newMessage}
               onChangeText={setNewMessage}
               placeholder="メッセージを入力"
               style={styles.input}
             />
-            <Pressable onPress={sendMessage} style={styles.sendButton}>
+            <Pressable
+              onPress={sendMessage}
+              style={styles.sendButton}
+              disabled={sending}
+            >
               {sending ? (
                 <ActivityIndicator color="#fff" />
               ) : (
@@ -268,16 +294,21 @@ export default function MessagesScreen() {
               )}
             </Pressable>
           </View>
-        </ThemedView>
+        </KeyboardAvoidingView>
       </Modal>
     </ThemedView>
   );
 }
-
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16 },
   title: { marginBottom: 12 },
-  row: { flexDirection: "row", alignItems: "center", paddingVertical: 10 },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    justifyContent: "space-between",
+  },
+  rowLeft: { flexDirection: "row", alignItems: "center" },
   avatar: { width: 44, height: 44, borderRadius: 22, marginRight: 12 },
   avatarPlaceholder: {
     width: 44,

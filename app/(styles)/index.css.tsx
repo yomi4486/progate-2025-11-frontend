@@ -9,6 +9,7 @@ export const cardStyles = StyleSheet.create({
     shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 6,
+    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
   },
   image: { height: 180, borderRadius: 8, marginBottom: 8 },
 });
