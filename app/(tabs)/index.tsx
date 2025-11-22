@@ -22,7 +22,7 @@ import { supabase } from "@/lib/supabase";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useRouter } from "expo-router";
 import TinderCard from "react-tinder-card";
-import { cardStyles, styles, swipeStyles } from "./index.css";
+import { cardStyles, styles, swipeStyles } from "../(styles)/index.css";
 
 type TimelineItem = Database["public"]["Tables"]["timelines"]["Row"];
 type SwipeHandlers = {
