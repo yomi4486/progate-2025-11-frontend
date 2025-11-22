@@ -1,13 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  Modal,
-  Pressable,
-  ScrollView,
-  View,
-} from "react-native";
+import { ActivityIndicator, Alert, Image, Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import ParallaxScrollView from "@/components/parallax-scroll-view";
@@ -389,23 +381,6 @@ export default function HomeScreen() {
 
   return (
     <ThemedView style={{ flex: 1 }}>
-      {checkingProfile && (
-        <View
-          style={{
-            position: "absolute",
-            left: 0,
-            right: 0,
-            top: 0,
-            bottom: 0,
-            zIndex: 2000,
-            backgroundColor: "rgba(0,0,0,0.45)",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <ActivityIndicator size="large" color="#fff" />
-        </View>
-      )}
       {newPostBanner ? (
         <ThemedView
           style={{
@@ -440,7 +415,14 @@ export default function HomeScreen() {
             { paddingTop: insets.top, justifyContent: "space-between" },
           ]}
         >
-          <ThemedText type="title">タイムライン</ThemedText>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <ThemedText type="title" style={{ marginRight: 8 }}>タイムライン</ThemedText>
+
+            {/* リロードアイコン */}
+            <Pressable onPress={fetchTimelines} >
+              <MaterialIcons name="refresh" size={24} color="#666" />
+            </Pressable>
+          </View>
           <Pressable
             onPress={() => router.push("/settings")}
             accessibilityRole="button"
@@ -468,57 +450,13 @@ export default function HomeScreen() {
           )}
         </ThemedView>
       </ParallaxScrollView>
+
       <FAB onPress={openCreate} />
       <FloatingModal
         visible={modalVisible}
         onClose={closeCreate}
         onSubmit={handleSubmit}
       />
-
-      <Modal
-        visible={postModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={closePost}
-      >
-        <ThemedView
-          style={{
-            flex: 1,
-            justifyContent: "center",
-            alignItems: "center",
-            padding: 16,
-          }}
-        >
-          <ThemedView
-            style={{
-              width: "100%",
-              maxHeight: "90%",
-              borderRadius: 8,
-              padding: 16,
-              backgroundColor: "#fff",
-            }}
-          >
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 12,
-              }}
-            >
-              <ThemedText type="title">
-                {selectedItem?.title ?? "投稿"}
-              </ThemedText>
-              <Pressable onPress={closePost} accessibilityRole="button">
-                <MaterialIcons name="close" size={24} color="#333" />
-              </Pressable>
-            </View>
-            <ScrollView>
-              <ThemedText>{selectedItem?.description ?? ""}</ThemedText>
-            </ScrollView>
-          </ThemedView>
-        </ThemedView>
-      </Modal>
     </ThemedView>
   );
 }
