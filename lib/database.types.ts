@@ -7,13 +7,65 @@ export type Json =
   | Json[];
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "13.0.5";
+  graphql_public: {
+    Tables: {
+      [_ in never]: never;
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json;
+          operationName?: string;
+          query?: string;
+          variables?: Json;
+        };
+        Returns: Json;
+      };
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
   };
   public: {
     Tables: {
+      likes: {
+        Row: {
+          created_at: string;
+          id: string;
+          timeline_id: string;
+          type: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          timeline_id: string;
+          type: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          timeline_id?: string;
+          type?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "likes_timeline_id_fkey";
+            columns: ["timeline_id"];
+            isOneToOne: false;
+            referencedRelation: "timelines";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       tags: {
         Row: {
           created_at: string;
@@ -37,6 +89,7 @@ export type Database = {
       };
       timelines: {
         Row: {
+          attachments: string[] | null;
           author: string;
           created_at: string;
           description: string | null;
@@ -44,6 +97,7 @@ export type Database = {
           title: string;
         };
         Insert: {
+          attachments?: string[] | null;
           author: string;
           created_at?: string;
           description?: string | null;
@@ -51,6 +105,7 @@ export type Database = {
           title: string;
         };
         Update: {
+          attachments?: string[] | null;
           author?: string;
           created_at?: string;
           description?: string | null;
@@ -90,45 +145,6 @@ export type Database = {
           name?: string;
         };
         Relationships: [];
-      };
-      likes: {
-        Row: {
-          id: string;
-          user_id: string;
-          timeline_id: string;
-          type: "like" | "skip"; // または string
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          timeline_id: string;
-          type: "like" | "skip";
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          timeline_id?: string;
-          type?: "like" | "skip";
-          created_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "likes_user_id_fkey";
-            columns: ["user_id"];
-            isOneToOne: false;
-            referencedRelation: "users";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "likes_timeline_id_fkey";
-            columns: ["timeline_id"];
-            isOneToOne: false;
-            referencedRelation: "timelines";
-            referencedColumns: ["id"];
-          },
-        ];
       };
     };
     Views: {
@@ -267,6 +283,9 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },
