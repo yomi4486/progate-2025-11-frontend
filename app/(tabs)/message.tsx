@@ -13,6 +13,7 @@ import {
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Database } from "@/lib/database.types";
 import { supabase } from "@/lib/supabase";
 
@@ -20,6 +21,7 @@ type UserRow = Database["public"]["Tables"]["users"]["Row"];
 type MessageRow = Database["public"]["Tables"]["messages"]["Row"];
 
 export default function MessagesScreen() {
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [likers, setLikers] = useState<UserRow[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -188,8 +190,12 @@ export default function MessagesScreen() {
     }
   };
 
+  const containerStyle = [styles.container, { paddingTop: 16 + insets.top, paddingBottom: 16 + insets.bottom }];
+  const chatContainerStyle = [styles.chatContainer, { paddingTop: 12 + insets.top }];
+  const composerStyle = [styles.composer, { paddingBottom: 12 + insets.bottom }];
+
   return (
-    <ThemedView style={styles.container}>
+    <ThemedView style={containerStyle}>
       <ThemedText type="title" style={styles.title}>
         投稿にいいねしてくれた人
       </ThemedText>
@@ -216,7 +222,7 @@ export default function MessagesScreen() {
       )}
 
       <Modal visible={chatOpen} animationType="slide">
-        <ThemedView style={styles.chatContainer}>
+        <ThemedView style={chatContainerStyle}>
           <View style={styles.chatHeader}>
             <Pressable onPress={closeChat}>
               <ThemedText>閉じる</ThemedText>
@@ -245,7 +251,7 @@ export default function MessagesScreen() {
             contentContainerStyle={{ padding: 12 }}
           />
 
-          <View style={styles.composer}>
+          <View style={composerStyle}>
             <TextInput
               value={newMessage}
               onChangeText={setNewMessage}
