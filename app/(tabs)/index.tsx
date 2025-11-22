@@ -38,11 +38,13 @@ function TimelineCard({
   item: TimelineItem;
   onOpen?: (item: TimelineItem) => void;
 }) {
-    const { height: windowHeight } = useWindowDimensions();
-    const cardHeight = Math.round(windowHeight * 0.6);
-    const maxImageHeight = Math.round(windowHeight * 0.35);
-    const [containerWidth, setContainerWidth] = useState<number | null>(null);
-    const [calcedImageHeight, setCalcedImageHeight] = useState<number | null>(null);
+  const { height: windowHeight } = useWindowDimensions();
+  const cardHeight = Math.round(windowHeight * 0.6);
+  const maxImageHeight = Math.round(windowHeight * 0.35);
+  const [containerWidth, setContainerWidth] = useState<number | null>(null);
+  const [calcedImageHeight, setCalcedImageHeight] = useState<number | null>(
+    null,
+  );
   const [author, setAuthor] = useState<{
     name?: string | null;
     icon_url?: string | null;
@@ -82,7 +84,7 @@ function TimelineCard({
           const w = e.nativeEvent.layout.width;
           if (!containerWidth) setContainerWidth(w);
         }}
-      > 
+      >
         <View
           style={{
             flexDirection: "row",
@@ -126,7 +128,7 @@ function TimelineCard({
           {item.description ?? ""}
         </ThemedText>
         {item.attachments && item.attachments.length > 0 && (
-          <> 
+          <>
             {containerWidth == null ? null : (
               <RemoteSizedImage
                 uri={item.attachments[0]}
@@ -164,7 +166,7 @@ function RemoteSizedImage({
       () => {
         if (!mounted) return;
         // サイズの取得に失敗した時，既定の高さに代用する
-        setHeight(Math.round(containerWidth * 9 / 16));
+        setHeight(Math.round((containerWidth * 9) / 16));
       },
     );
     return () => {
@@ -175,7 +177,8 @@ function RemoteSizedImage({
   if (height == null) return null;
 
   const flattened = StyleSheet.flatten(cardStyles.card) as any;
-  const CARD_PADDING = typeof flattened?.padding === "number" ? flattened.padding : 16;
+  const CARD_PADDING =
+    typeof flattened?.padding === "number" ? flattened.padding : 16;
   const imageWidth = Math.max(0, containerWidth - CARD_PADDING * 2);
 
   return (
@@ -193,8 +196,8 @@ function TimelineSwiper({
   onCardLeftScreen,
   onOpen,
 }: { items: TimelineItem[] } & SwipeHandlers) {
-    const { height: windowHeight } = useWindowDimensions();
-    const containerMinHeight = Math.round(windowHeight * 0.8);
+  const { height: windowHeight } = useWindowDimensions();
+  const containerMinHeight = Math.round(windowHeight * 0.8);
   const [stack, setStack] = React.useState<TimelineItem[]>(items);
 
   React.useEffect(() => {
@@ -208,7 +211,10 @@ function TimelineSwiper({
 
   return (
     <View
-      style={[swipeStyles.container, { position: "relative", minHeight: containerMinHeight }]}
+      style={[
+        swipeStyles.container,
+        { position: "relative", minHeight: containerMinHeight },
+      ]}
     >
       {stack.map((item, idx) => {
         const zIndex = stack.length - idx;
@@ -573,13 +579,20 @@ export default function HomeScreen() {
               </Pressable>
             </View>
             <ScrollView>
-              {selectedItem?.attachments && selectedItem.attachments.length > 0 && (
-                <Image
-                  source={{ uri: selectedItem.attachments[0] }}
-                  style={{ width: "100%", aspectRatio: 16 / 9, maxHeight: 400, borderRadius: 8, marginBottom: 12 }}
-                  resizeMode="cover"
-                />
-              )}
+              {selectedItem?.attachments &&
+                selectedItem.attachments.length > 0 && (
+                  <Image
+                    source={{ uri: selectedItem.attachments[0] }}
+                    style={{
+                      width: "100%",
+                      aspectRatio: 16 / 9,
+                      maxHeight: 400,
+                      borderRadius: 8,
+                      marginBottom: 12,
+                    }}
+                    resizeMode="cover"
+                  />
+                )}
               <ThemedText>{selectedItem?.description ?? ""}</ThemedText>
             </ScrollView>
           </ThemedView>
