@@ -24,6 +24,8 @@ export default function AccountScreen() {
     id?: string | null;
   } | null>(null);
   const [posts, setPosts] = useState<TimelineItem[]>([]);
+  // 追加: いいねした投稿を管理するstate
+  const [likedPosts, setLikedPosts] = useState<TimelineItem[]>([]);
 
   useEffect(() => {
     let mounted = true;
@@ -37,6 +39,7 @@ export default function AccountScreen() {
           return;
         }
 
+        // 1. プロフィールの取得
         const { data: profileData, error: profileError } = await supabase
           .from("users")
           .select("id,name,bio,icon_url")
@@ -47,14 +50,41 @@ export default function AccountScreen() {
         if (!mounted) return;
         setProfile(profileData ?? { id: user.id });
 
+        // 2. 自分の投稿を取得
         const { data: timelineData, error: timelineError } = await supabase
           .from("timelines")
           .select("*")
           .eq("author", user.id)
           .order("created_at", { ascending: false });
         if (timelineError) throw timelineError;
+        
+        // 3. いいねした投稿を取得 (ここを追加)
+        // likesテーブルを経由して、timelinesの情報を取得する
+        const { data: likedData, error: likedError } = await supabase
+          .from("likes")
+          .select(`
+            timelines (
+              *
+            )
+          `)
+          .eq("user_id", user.id)
+          .eq("type", "like") // 'like'のものだけ
+          .order("created_at", { ascending: false }); // 最近いいねした順
+
+        if (likedError) throw likedError;
+
         if (!mounted) return;
+
         setPosts((timelineData as unknown as TimelineItem[]) || []);
+        
+        // Supabaseからの返り値は { timelines: {...} } の配列になっているので、
+        // timelinesの中身だけを取り出して配列にする
+        const formattedLikedPosts = likedData
+          ?.map((item) => item.timelines)
+          .filter((t) => t !== null) as unknown as TimelineItem[];
+          
+        setLikedPosts(formattedLikedPosts || []);
+
       } catch (e: unknown) {
         if (e instanceof Error) {
           console.error("Account load failed", e);
@@ -68,6 +98,30 @@ export default function AccountScreen() {
       mounted = false;
     };
   }, [router]);
+
+  // 投稿リストを表示するコンポーネント（共通化）
+  const renderPostList = (items: TimelineItem[], emptyText: string) => {
+    if (items.length === 0) {
+      return <ThemedText style={{ marginTop: 8 }}>{emptyText}</ThemedText>;
+    }
+    return items.map((p) => (
+      <View
+        key={p.id}
+        style={{
+          paddingVertical: 12,
+          borderBottomWidth: 1,
+          borderColor: "#eee",
+        }}
+      >
+        <ThemedText type="subtitle" style={{ fontSize: 16 }}>
+          {p.title ?? "No Title"}
+        </ThemedText>
+        <ThemedText style={{ fontSize: 14, color: "#666", marginTop: 4 }}>
+          {p.description}
+        </ThemedText>
+      </View>
+    ));
+  };
 
   return (
     <ParallaxScrollView
@@ -93,12 +147,13 @@ export default function AccountScreen() {
           <ActivityIndicator size="large" />
         </View>
       ) : (
-        <ThemedView style={{ padding: 16 }}>
+        <ThemedView style={{ padding: 16, paddingBottom: 40 }}>
+          {/* プロフィール情報 */}
           <View
             style={{
               flexDirection: "row",
               alignItems: "center",
-              marginBottom: 12,
+              marginBottom: 24,
             }}
           >
             {profile?.icon_url ? (
@@ -122,32 +177,32 @@ export default function AccountScreen() {
                 }}
               />
             )}
-            <View>
+            <View style={{ flex: 1 }}>
               <ThemedText type="title">
                 {profile?.name ?? "あなたのアカウント"}
               </ThemedText>
-              {profile?.bio ? <ThemedText>{profile.bio}</ThemedText> : null}
+              {profile?.bio ? (
+                <ThemedText style={{ marginTop: 4 }}>{profile.bio}</ThemedText>
+              ) : null}
             </View>
           </View>
 
-          <ThemedText type="subtitle">あなたの投稿</ThemedText>
-          {posts.length === 0 ? (
-            <ThemedText>まだ投稿がありません。</ThemedText>
-          ) : (
-            posts.map((p) => (
-              <View
-                key={p.id}
-                style={{
-                  paddingVertical: 8,
-                  borderBottomWidth: 1,
-                  borderColor: "#eee",
-                }}
-              >
-                <ThemedText type="subtitle">{p.title}</ThemedText>
-                <ThemedText>{p.description}</ThemedText>
-              </View>
-            ))
-          )}
+          {/* 自分の投稿セクション */}
+          <View style={{ marginBottom: 24 }}>
+            <ThemedText type="subtitle" style={{ marginBottom: 8 }}>
+              あなたの投稿
+            </ThemedText>
+            {renderPostList(posts, "まだ投稿がありません。")}
+          </View>
+
+          {/* いいねした投稿セクション (追加) */}
+          <View>
+            <ThemedText type="subtitle" style={{ marginBottom: 8 }}>
+              いいねした投稿
+            </ThemedText>
+            {renderPostList(likedPosts, "まだ「いいね」した投稿はありません。")}
+          </View>
+
         </ThemedView>
       )}
     </ParallaxScrollView>
